@@ -28,7 +28,7 @@ There's a minimum of dependency on third-party Python modules.  If they
 are not installed, Hg Suite quitely works without them.
 
 Additionally, there are a few environment variables that the suite will
-use to affect its behavior if found, otherwise less-desireable fallback
+use to affect its behavior, if found.  Otherwise, less-desireable fallback
 options will be employed.
 
 Variable      | Purpose       | Fall-back
@@ -45,7 +45,7 @@ using the environment.
 The following sections document the commands available, their purpose, and
 where applicable, how best to employ them.
 
-Each command would be executed by running the entry point "PyHg.py" module,
+Each command is  executed by running the entry point "PyHg.py" module,
 and passing in the command selector along with any additional command-line
 arguments.  As an example, I use [Cmdr](https://github.com/cmderdev/cmder) as my
 shell under Windows, and it allows me to set a large set of macros, so I
@@ -66,27 +66,27 @@ subdirectories are processed with Hg Suite commands.
 
 ### Managing Changes
 I manage code changes as what I term "microbranches".  These are collections
-of related code changes that are usually work-in-progress that I do not want
+of related code changes that are usually works-in-progress that I do not want
 to make a permanent and official part of the repository until ready.
 
 These commands provide managment of these microbranch changesets that exist in
 the working copy where they are executed.  They will bundle up file changes
 (modifications, deletions and additions) and archive them using 7-Zip in a
-cache location on your system (using the PYHG_MICROBRANCH_ROOT environment
+cache location on your system (using the `PYHG_MICROBRANCH_ROOT` environment
 variable, if set).
 
 This might sound similar to Mercurials existing "shelf" mechanism, however,
 it differs significantly in that the shelf location is *outside* of the working
 copy folder.  In my particular workflow, this allows me to deposit microbranch
 bundles into a cloud-managed location (e.g., Nextcloud) where I can then change
-to another platform (e.g., OS X) and instantly retrieve those work-in-progress
+to another platform (e.g., OS X) and instantly re-apply those work-in-progress
 changes for further build and functionality testing before making a permanent
 repository commit.
 
 #### shelve
 This command will collect all pending modifications in a working copy and
 store them as a "microbranch" in a location on your local file system.  It
-will attempt to use the PYHG_MICROBRANCH_ROOT location first, and then fall
+will attempt to use the `PYHG_MICROBRANCH_ROOT` location first, and then fall
 back to the system temp location.
 
 Once successfully shelved, the pending changes in the local working copy
@@ -96,12 +96,12 @@ You can provide a name for the "microbranch" to distinguish it from
 other existing branches; if no name is given, the default name "shelf" will
 be used and any existing "shelf" archive will be rolled.
 
-A comment can also be provided for the "microbranch" by using the "-c" or
-"--comment" option.
+A comment can also be provided for the "microbranch" by using the 'comment'
+option (-c/--comment).
 
 `shelve -c "Adds a read_state() function to the build_lib.py library" read_state`
 
-> Shelved the following state as microbranch as "read_state":<br>
+> Shelved the following state as microbranch "read_state":<br>
 > ! build_system\build_lib.py
 
 #### shelved
@@ -120,7 +120,7 @@ Some things to note about `restore`:
 * Executed by itself, it uses the most recent "shelf" microbranch (if it exists) as the source
 * You can provide a microbranch name to select a specific microbranch as the source
 * The command will compare the source changeset value to the target, and if they differ, it will launch the available merge tool to allow you to safely merge in the code differences
-* You can use the overwrite option (-o) to cause the source asset to complete overwrite the target asset, skipping merge checks
+* You can use the overwrite option (-o) to cause the source asset to completely overwrite the target asset, skipping merge checks
 
 `restore -o read_state`
 
@@ -168,14 +168,14 @@ command is considerably deeper in the functionlity it provides.
 
 ##### [comments]
 If no commit message is provided (i.e., -m/--message), then `commit` will
-look for the PYHG_COMMENT_EDITOR value, and if not set, will fall-back to
+look for the `PYHG_COMMENT_EDITOR` value, and if not set, will fall-back to
 a well-known text editor provided by the platform ("notepad" on Windows,
 "vi" on UN*X variants).
 
 If a commit message *is* provided on the command line, the `commit` command
 will perform some massaging of the text:
 
-* It will word-wrap the text at 80-column offsets
+* It will word-wrap the text at 80-column offsets (use the 'wrap' option (-w/--wrap) to change this)
 * Text will be broken into separate lines whenever a "\n" sequence is encountered
 
 This means that the following command line:
@@ -209,7 +209,7 @@ cases where there were lots of changes that may not directly relate to one
 another, this became quite a time-saver.
 
 `commit` uses a comment-management subsystem to locate and extract embedded
-commit comments.  Embedded commit comments begin with an at symbol (@) followed
+commit comments.  Embedded commit comments begin with an AT symbol (@) followed
 by a keyword and a colon.  The keyword determines the kind of prefix the commit
 comment will have:
 
@@ -217,7 +217,7 @@ Keyword  | Comment prefix
 -------- | --------------
 @comment | No prefix (considered private)
 @private | "[PRIVATE]" prefix (explicitly private; internal, not for public consumption)
-@public | "[PUBLIC]" preifx (external, targeting the public)
+@public | "[PUBLIC]" prefix (external, targeting the public)
 
 Embedded comment tags are shielded from the source langauge via that language's
 comment system.  Consider the following examples:
@@ -232,7 +232,7 @@ is performed.  Backups are made of the original files (containing the embedded
 comments) as aborting the commit will leave the "cleansed" files in place.
 
 Embedded commit comments can also span lines.  If you terminate a comment line
-with a backslash, and begin the next line with an at symbol (@), the Hg Suite
+with a backslash, and begin the next line with an at symbol (@), Hg Suite
 will consider it a continuation and will process it as the same commit message:
 
 `# @private: Refactored intramodule data exchange to use queues \`<br>
@@ -248,7 +248,7 @@ subsystem when displaying the working copy's current state:
 > &nbsp;&nbsp;&nbsp;&nbsp;sockets
 
 ##### [staging]
-The `commit` comand detects and works with staged files.  Staging is discussed later in this section.
+The `commit` comand detects and works with staged files.  Staging is discussed a later section all its own.
 
 #### push
 The `push` command is a pretty thin wrapper around the `hg push` command.
@@ -277,16 +277,16 @@ The staging system will take pains to keep its view of its staged files as
 accurate as possible.  This means that the state of the files in a staging
 area are reevaluated each time that staging area is processed by any command.
 So, if a staged file is reverted to an unmodified (or untracked) state,
-then Hg Suite will automatically purge it from the staging area the next
-time the staging area is processed.
+then Hg Suite will automatically purge it from the staging area if required
+the next time the staging area is processed.
 
-Hg Suite's staging system provides two kinds of staged types: references
-or snapshots.  Snapshots are more like git's system, where a snapshot of
+Hg Suite's staging system provides two kinds of staged types: **references**
+and **snapshots**.  Snapshots are more like git's system, where a snapshot of
 the source file is captured at a point in time, and is independent of the
 state of the source file.
 
 References are "light" staged entries, simply maintaining a pointer to
-the source file.  The state to the source file is not independent of its
+the source file.  The state of the source file is not independent of its
 staged reference.  For example, if the state of a source file for a staged
 reference is cleared, the staged reference becomes invalid ("orphaned").
 The staging system will detect this, and will either automatically purge
@@ -310,18 +310,19 @@ You can create custom staging areas using the 'stage name' option
 area will be the target of the commands.
 
 By default, references are staged.  You can specify that a snapshot
-should be created by specifying the 'snapshot' command (-S/--snapshot).
+should be created instead by specifying the 'snapshot' command (-S/--snapshot).
 
 The `status` comand also recognizes staged files (see below).
 
 #### stage
 You can provide full file paths to the `stage` command, or you can provide
 just partial text values and `stage` will stage all entries that contain the
-text (handy for staging modules [.cpp and .h] by just their base file
-names).
+text (handy for staging files without all the extra typing).
 
 If your `stage` command detects duplicate entries being staged, they will
-be summarily ignored.
+"refreshed".  References are no really affected, but snapshots will have their
+captured states updated to the current state of their source files.  Be sure
+this is the intended outcome--you cannot retreive the lost snapshot state.
 
 `stage build_lib.py`
 
@@ -350,8 +351,8 @@ references.  Additionally, if you have snapshot entries already in the
 target staging area, those snapshots will be "refreshed" automatically,
 with their previously captured states being irretrievably lost.
 
-Just to catch you, Hg Suite will prompt you to perform the action should
-these conditions arise:
+Just as a safety net, Hg Suite will prompt you to perform the action should
+it detect existing snapshots in the target stging area:
 
 > You are about to refresh snapshot entries in the "default" staging area.<br>
 > Press ENTER if this is the intent (or press Ctrl-C to abort):
@@ -363,7 +364,7 @@ currently defined areas.
 `staged`
 
 > The following entries are pending in the "default" staging area:<br>
-> ! Purge.bat ()<br>
+> ! Purge.bat (=)<br>
 > ! build_system\test_build_system.py (&)
 
 Note in the above output that each entry is trailed by a different symbol.
@@ -390,9 +391,9 @@ staging areas is one isn't explicitly named using the 'stage name' option
 > &plus; test.h (&)<br>
 > &plus; test.cpp (&)
 
-A situation can arise where a staged reference loses the linage with its
+A situation can arise where a staged reference loses the linkage with its
 source file state.  This happens when the source file for a staged reference
-has its state reset.  In these situations, the refernce becomes an "orphan".
+has its state reset.  In these situations, the reference becomes an "orphan".
 Such abberations in a staging area are automatically (and silently) purged by
 the `staged` command when detected.
 
@@ -405,9 +406,11 @@ the `staged` command when detected.
 
 #### unstage
 This command will remove entries from a staging area.  Entries are identified
-by filename.
+by path, or by filename.
 
 For example, to remove module files "test.cpp" and "test.h" from a staging area:
+
+`staged`
 
 > The following entries are pending in the "Xperiment" staging area:<br>
 > &plus; test.h (&)<br>
@@ -421,7 +424,7 @@ If the staging area is left without entries after a call to `unstage`, then
 the area is summarily remove from the system.
 
 You can purge all staging areas in your repository by passing the 'erase' option
-(-X/--erase) to the `unstage` command.  This will remove all staged entries, so
+(-X/--erase) to the `unstage` command.  This will remove **ALL** staged entries, so
 **use this with caution**, or you may have to do some rebuilding.
 
 ### Updating
@@ -438,7 +441,7 @@ all working-copy folders under the current working directory and perform
 the command on each.
 
 When processing 'all', it sorts the source of the working copies to ensure
-that working copies linked to extneral sources are synchronized first, and
+that working copies linked to external sources are synchronized first, and
 then it processes those that depend on local repositories.  This ensures
 that local working copies that depend on other working copies that get their
 updates from off site get the most current data.
@@ -462,12 +465,12 @@ merge.
 
 You can avoid this final commit step by specifying the 'merge only' option
 (-M/--merge-only), in which case the uncommitted merge files will be left
-in the working copy for you to dispose of as you wish (undo the merge, or
-commit with your own message).  Make sure you know how to undo a merge
-if you use this option with that intent--a simple `hg revert` is not
-sufficient.
+in the working copy for you to dispose of as you wish (undo the merge after
+testing the changes, or commit with your own message).  Make sure you know
+how to undo a merge if you use this option with that intent--a simple
+`hg revert` is not sufficient.
 
-### Miscelaneous
+### Miscellaneous
 
 #### status
 Generates a report about the state of the working copy.
@@ -493,7 +496,7 @@ on their types.  In other words, references will display differently from
 their snapshot cousins when their source files are no longer of note.
 
 For example, in the following output, a snapshot file is present along
-with an orphaned reference in the "default" staging area:
+with a reference in the "default" staging area:
 
 `status`
 
@@ -517,11 +520,11 @@ on how to correct the situation.
 
 #### diff
 The `diff` command scans the current location in the working copy for
-any modified files, and then runs a difference command (`hg wdiff` by
-default) on each.  This command peforms an implicit comparison between
-the working copy file and its previous version in the repository.
+any modified files, and then runs a difference command (`hg wdiff`)
+on each.  This command peforms a comparison between the working copy
+file and its previous version in the repository.
 
-If you have a diff/merge tool defined in PYHG_MERGE_TOOL, this tool
+If you have a diff/merge tool defined by `PYHG_MERGE_TOOL`, this tool
 will be passed to `hg wdiff` as the tool to use.  Otherwise, `hg wdiff`
 will check your Mercurial configuration file for a value in the
 "extdiff.cmd.wdiff" setting.  If that isn't set, Mercurial will likely
