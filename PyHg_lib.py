@@ -597,7 +597,7 @@ def extract_comments(filename, display=DISPLAY_PLAIN):
 
     try:
         lines = []
-        with open(filename, 'rb') as f:
+        with open(filename) as f:
             for line in f:
                 lines.append(line)
     except:
@@ -617,7 +617,7 @@ def extract_comments(filename, display=DISPLAY_PLAIN):
     fixed_lines, comments = __pull_comments(lines, delete_comments=True, display_type=display)
 
     try:
-        open(filename, 'wb').write(''.join(fixed_lines))
+        open(filename, 'w').write(''.join(fixed_lines))
     except:
         raise Exception("Failed to write to file '%s'" % filename)
 

@@ -233,7 +233,7 @@ class Commit(object):
         comment_count = len(all_comments.keys())
 
         if comment_count > 0:
-            comment_keys = all_comments.keys()
+            comment_keys = list(all_comments.keys())
             comment_keys.sort()
 
             with open(options.batch_file_name, 'w') as f:
