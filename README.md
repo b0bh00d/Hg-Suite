@@ -104,6 +104,9 @@ option (-c/--comment).
 > Shelved the following state as microbranch "read_state":<br>
 > ! build_system\build_lib.py
 
+The `shelve` command will also bundle up any active staging areas into the
+archive and clear them along with the working copy's change states.
+
 #### shelved
 You can view the microbranches that you currently have shelved by issuing this command:
 
@@ -127,6 +130,11 @@ Some things to note about `restore`:
 > .<br>
 > Restored the following state from microbranch "read_state":<br>
 > ! build_system\build_lib.py                                 
+
+If active staging areas were included in the shelving action, `restore` will
+replace it along with the shelved working copy change states.  If active
+staging areas already exist when `restore` is called, the command will abort
+and complain about the unknown state.
 
 #### switch
 At its core, the `switch` command is functionally equivalent to
