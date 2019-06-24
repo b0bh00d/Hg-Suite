@@ -550,23 +550,23 @@ Hg Suite) just in case somebody might find them useful.
 
 The "$T" token in the macros below is a [Cmdr](https://github.com/cmderdev/cmder) macro idiom used to separate unique commands.  The "$*" token expands to all provided command line arguments.
 
-* `status=python %PYHG%\PyHg.py status $*`
-* `comment=python %PYHG%\PyHg.py status $*`
-* `commit=python %PYHG%\PyHg.py commit $*`
-* `push=python %PYHG%\PyHg.py push $*`
-* `pushex=python %PYHG%\PyHg.py push extern $*`
-* `mergeheads=python %PYHG%\PyHg.py mergeheads $*`
-* `rebase=python %PYHG%\PyHg.py rebase $*`
-* `shelve=python %PYHG%\PyHg.py shelve $*`
-* `shelved=python %PYHG%\PyHg.py shelved $*`
-* `restore=python %PYHG%\PyHg.py restore $*`
-* `diff=python %PYHG%\PyHg.py diff $*`
-* `conflicts=python %PYHG%\PyHg.py conflicts $*`
-* `switch=python %PYHG%\PyHg.py switch -V $*`
-* `stage=python %PYHG%\PyHg.py stage $*`
-* `unstage=python %PYHG%\PyHg.py unstage $*`
-* `staged=python %PYHG%\PyHg.py staged $*`
-* `sync=python %PYHG%\PyHg.py update $*`
+* `status=py %PYHG%\PyHg.py status $*`
+* `comment=py %PYHG%\PyHg.py status $*`
+* `commit=py %PYHG%\PyHg.py commit $*`
+* `push=py %PYHG%\PyHg.py push $*`
+* `pushex=py %PYHG%\PyHg.py push extern $*`
+* `mergeheads=py %PYHG%\PyHg.py mergeheads $*`
+* `rebase=py %PYHG%\PyHg.py rebase $*`
+* `shelve=py %PYHG%\PyHg.py shelve $*`
+* `shelved=py %PYHG%\PyHg.py shelved $*`
+* `restore=py %PYHG%\PyHg.py restore $*`
+* `diff=py %PYHG%\PyHg.py diff $*`
+* `conflicts=py %PYHG%\PyHg.py conflicts $*`
+* `switch=py %PYHG%\PyHg.py switch -V $*`
+* `stage=py %PYHG%\PyHg.py stage $*`
+* `unstage=py %PYHG%\PyHg.py unstage $*`
+* `staged=py %PYHG%\PyHg.py staged $*`
+* `sync=py %PYHG%\PyHg.py update $*`
 * `outgoing=hg -v outgoing`
 * `pull=hg pull`
 * `reset=hg revert --all`
