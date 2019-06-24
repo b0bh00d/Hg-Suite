@@ -29,7 +29,11 @@ import os
 import uuid
 import shutil
 import subprocess
-import cPickle
+
+try:
+    import cPickle
+except:
+    import pickle as cPickle
 
 import Status
 
