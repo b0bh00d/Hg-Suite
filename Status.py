@@ -55,6 +55,7 @@ class Status(Action):
             # decorate entries based on any staging information
 
             orphaned_tag = '^'
+            orphaned_count = 0
 
             root = find_hg_root()
 
@@ -70,7 +71,6 @@ class Status(Action):
                 #     self.message = msg
                 #     return False
 
-                orphaned_count = 0
                 for stage_name in stage_names:
 
                     # reference_count = 0
