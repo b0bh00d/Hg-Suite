@@ -36,6 +36,7 @@ Variable      | Purpose       | Fall-back
 PYHG_MICROBRANCH_ROOT | Path to the microbranch cache folder | "%temp%" under Windows; "/tmp" under UN*X variants
 PYHG_COMMENT_EDITOR | The executable to use for editing commit comments | "notepad" under Windows; "vi" under UN*X variants
 PYHG_MERGE_TOOL | The merge tool to execute when required; two file paths will be provided, source and target
+PYHG_SNAPSHOT_AS_TIMESTAMP | Display snapshot time as a date timestamp instead of elapsed time | Snapshots are displayed with elapsed time
 
 In the future, I may expand persistent state settings to use the Mercurial
 configuration file as well, allowing settings to be placed there instead of
@@ -285,7 +286,7 @@ The staging system will take pains to keep its view of its staged files as
 accurate as possible.  This means that the state of the files in a staging
 area are reevaluated each time that staging area is processed by any command.
 So, if a staged file is reverted to an unmodified (or untracked) state,
-then Hg Suite will automatically purge it from the staging area if required
+then Hg Suite will automatically purge it from the staging area (if required)
 the next time the staging area is processed.
 
 Hg Suite's staging system provides two kinds of staged types: **references**
@@ -360,7 +361,7 @@ target staging area, those snapshots will be "refreshed" automatically,
 with their previously captured states being irretrievably lost.
 
 Just as a safety net, Hg Suite will prompt you to perform the action should
-it detect existing snapshots in the target stging area:
+it detect existing snapshots in the target staging area:
 
 > You are about to refresh snapshot entries in the "default" staging area.<br>
 > Press ENTER if this is the intent (or press Ctrl-C to abort):
@@ -387,6 +388,15 @@ between the two files will be displayed.
 
 > The following entries are pending in the "default" staging area:<br>
 > ! Purge.bat (15m27s)<br>
+> ! build_system\test_build_system.py (&)
+
+You can alter the way snapshots display their time offsets using the
+`PYHG_SNAPSHOT_AS_TIMESTAMP` environment variable.  If it is set to a
+true value ("1", "true", "True", or "TRUE"), then snapshot times are
+displayed as fixed date/time values instead of elapsed time offsets:
+
+> The following entries are pending in the "default" staging area:<br>
+> ! Purge.bat (Sat Jun 22 08:54:34 2019)<br>
 > ! build_system\test_build_system.py (&)
 
 The `staged` command will list the entries and states of all entries in all

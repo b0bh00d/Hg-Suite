@@ -27,6 +27,7 @@ from __future__ import print_function
 import sys
 import os
 import uuid
+import time
 import shutil
 import subprocess
 
@@ -103,15 +104,19 @@ class StageIO(object):
         if staged_entry.snapshot is None:
             snap = '&'
         else:
+            snapshot_as_timestamp = False
+            if 'PYHG_SNAPSHOT_AS_TIMESTAMP' in os.environ:
+                snapshot_as_timestamp = (os.environ['PYHG_SNAPSHOT_AS_TIMESTAMP'] in ["1", "true", "True", "TRUE"])
             snapshot_path = os.path.join(stage_db_path, staged_entry.snapshot)
             snapshot_stat = os.stat(snapshot_path)
-            source_stat = os.stat(source_file)
-            snap = ''
-            if int(snapshot_stat.st_mtime) != int(source_stat.st_mtime):
-                # how old is it?
-                snap = format_seconds(int(source_stat.st_mtime) - int(snapshot_stat.st_mtime))
-            else:
-                snap = '='  # equivalent
+            snap = '='  # equivalent
+            if snapshot_as_timestamp:
+                snap = time.ctime(snapshot_stat.st_mtime)
+            else:       # elapsed time
+                source_stat = os.stat(source_file)
+                if int(snapshot_stat.st_mtime) != int(source_stat.st_mtime):
+                    # how old is it?
+                    snap = format_seconds(int(source_stat.st_mtime) - int(snapshot_stat.st_mtime))
         return snap
 
 class Stage(StageIO):
