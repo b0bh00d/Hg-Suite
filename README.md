@@ -544,7 +544,7 @@ fixed commit message.
 
 #### incoming
 This command is a thin wrapper around the `hg incoming` command, with
-some 'pretty printing' support.  The modules is employed by the `update`
+some 'pretty printing' support.  The module is employed by the `update`
 command for its delta printing.
 
 # Mercurial-based macros
