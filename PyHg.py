@@ -153,7 +153,7 @@ class Options(object):
         if 'no repository found' in self.branch:
             self.branch = None
 
-        cmd_set = ['update', 'commit', 'stage', 'unstage', 'staged', #'incoming',
+        cmd_set = ['update', 'commit', 'stage', 'unstage', 'staged', 'incoming',
                    'status', 'rebase', 'shelve', 'shelved', 'restore', #'backup',
                    'conflicts', 'push', 'mergeheads', 'diff', 'switch']
 
@@ -203,9 +203,9 @@ if __name__ == "__main__":
     elif options.action == 'status':
         from Status import Status
         pyhg_action = Status()
-    # elif options.action == 'incoming':
-    #     from Incoming import Incoming
-    #     Incoming(options)
+    elif options.action == 'incoming':
+        from Incoming import Incoming
+        Incoming(options)
     elif options.action == 'commit':
         from Commit import Commit
         Commit(options)

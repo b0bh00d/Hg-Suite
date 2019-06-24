@@ -542,6 +542,11 @@ that no pending changes are present in the working copy.
 This command will automatically commit a successful merge with a
 fixed commit message.
 
+#### incoming
+This command is a thin wrapper around the `hg incoming` command, with
+some 'pretty printing' support.  The modules is employed by the `update`
+command for its delta printing.
+
 # Mercurial-based macros
 
 I'm including here the command-line macros I use (Windows, in this
