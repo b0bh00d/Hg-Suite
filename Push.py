@@ -36,8 +36,8 @@ class Push(object):
     def __init__(self, options):
         def get_changesets():
             command = ['hg', 'outgoing']
-            output = subprocess.Popen(command, stdout=subprocess.PIPE).communicate()[0].decode("utf-8")
-            if 'no changes found' in output:
+            output = subprocess.Popen(command, stdout=subprocess.PIPE, stderr=subprocess.STDOUT).communicate()[0].decode("utf-8")
+            if ('no changes found' in output) or ('abort:' in output):
                 return (None, None, None)
 
             changesets = []
@@ -63,30 +63,33 @@ class Push(object):
         start_dir = os.getcwd()     # in case we push through the chain
 
         d = MyParser('.hg/hgrc').as_dict()
-        destination = d['paths']['default']
-
-        print('Pushing %d %s to %s' % (changeset_data[1], changeset_data[2], destination))
-        while True:
-            command = ['hg', 'push']
-            push_process = subprocess.Popen(command, stdout=subprocess.PIPE)
-            output = push_process.communicate()[0].decode("utf-8")
-
-            if push_process.returncode:
-                print("ERROR: Push operation failed with %d." % push_process.returncode, file=sys.stderr)
-                print(output, file=sys.stderr)
-                sys.exit(1)
-
-            if (len(options.args) == 0) or \
-               (not options.args[0].startswith('extern')) or \
-               (not os.path.exists(destination)):
-                break
-
-            os.chdir(destination)
-            d = MyParser('.hg/hgrc').as_dict()
+        if ('paths' not in d) or ('default' not in d['paths']):
+            print("ERROR: No upstream repository has been defined.", file=sys.stderr)
+        else:
             destination = d['paths']['default']
 
-            changeset_data = get_changesets()
+            print('Pushing %d %s to %s' % (changeset_data[1], changeset_data[2], destination))
+            while True:
+                command = ['hg', 'push']
+                push_process = subprocess.Popen(command, stdout=subprocess.PIPE)
+                output = push_process.communicate()[0].decode("utf-8")
 
-            print('--> %d %s to %s' % (changeset_data[1], changeset_data[2], destination))
+                if push_process.returncode:
+                    print("ERROR: Push operation failed with %d." % push_process.returncode, file=sys.stderr)
+                    print(output, file=sys.stderr)
+                    sys.exit(1)
+
+                if (len(options.args) == 0) or \
+                (not options.args[0].startswith('extern')) or \
+                (not os.path.exists(destination)):
+                    break
+
+                os.chdir(destination)
+                d = MyParser('.hg/hgrc').as_dict()
+                destination = d['paths']['default']
+
+                changeset_data = get_changesets()
+
+                print('--> %d %s to %s' % (changeset_data[1], changeset_data[2], destination))
 
         os.chdir(start_dir)
