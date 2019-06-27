@@ -497,9 +497,13 @@ Like `update`, `status` accepts the 'all' option (-a/--process-all) and
 will recurse into working copies beneath the current working directory
 and product a status report for each.
 
-The state indicators used by `status` differ from Mercurial.  Modified
-files are flagged with an exclamation (!), added files with a plus
-sign (+), and deleted files with a minus (-).
+The state indicators used by `status` differ from Mercurial:
+
+* ! modified
+* &plus; added
+* &minus; removed
+* &ast; renamed
+* $ copied
 
 The `status` command will detect and display any embedded commit
 comments that exist in modified files in the working copy (see the

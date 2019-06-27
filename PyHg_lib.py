@@ -282,7 +282,7 @@ def colorize_status(lines):
             status = '*'
             color = renamed_color
         if status == 'C':
-            status = '&'
+            status = '$'
             color = copied_color
 
         file = line[2:]
