@@ -244,11 +244,12 @@ def make_path(file_name):
     return True
 
 def colorize_status(lines):
-    default_color = '\033[1;33m'
+    default_color = '\033[1;37m'
     modified_color = '\033[1;36m'
     added_color = '\033[1;35m'
     removed_color = '\033[1;31m'
     renamed_color = '\033[1;32m'
+    copied_color = '\033[1;33m'
     reset_color = ''
 
     #if 'CMDER_ROOT' in sys.environ:
@@ -280,6 +281,9 @@ def colorize_status(lines):
         if status == 'V':
             status = '*'
             color = renamed_color
+        if status == 'C':
+            status = '&'
+            color = copied_color
 
         file = line[2:]
 
@@ -310,7 +314,13 @@ def get_changeset_for(options, file):
 
 def fixup_renames(lines):
     # this function assumes an 'hg status' was executed
-    # with the '-C' option to identify renames
+    # with the '-C' option to identify the "source of
+    # copied files".
+    #
+    # if one is identified, it is either a copy or a
+    # rename.  if it's a rename, then the source file
+    # will no longer exist.
+
     renames = {}
     actions = {}
 
@@ -323,50 +333,66 @@ def fixup_renames(lines):
         action = lines[i][0]
         value = lines[i][2:]
         if action == 'A':
-            if previous_action is not None:
-                if previous_action not in actions:
-                    actions[previous_action] = []
-                actions[previous_action].append((None,previous_value))
+            if action not in actions:
+                actions[action] = []
+            actions[action].append((None,value))
             previous_action = action
             previous_value = value
         elif action == ' ' and previous_action == 'A':
-            # this is a rename
+            # this is a copy or a rename
+
             renames[value] = previous_value
-            if 'V' not in actions:
-                actions['V'] = []
-            actions['V'].append((value,previous_value))
+            if 'A' in actions:
+                # remove the 'A'
+                for i in range(len(actions[previous_action])):
+                    if actions[previous_action][i][1] == previous_value:
+                        del actions[previous_action][i]
+                        break
+
             previous_action = None
             previous_value = None
         elif action == 'R':
-            # if this remove is in the renames map, then it needs to be suppressed
+            # if this remove is in the renames map,
+            # then it needs to be suppressed
             if value not in renames:
+                # this is a remove, not a rename
                 if action not in actions:
                     actions[action] = []
                 actions[action].append((None,value))
         else:
-            if previous_action is not None:
-                if previous_action not in actions:
-                    actions[previous_action] = []
-                actions[previous_action].append((None,previous_value))
-                previous_action = None
-                previous_value = None
+            # all other status changes are captured
+            # without additional processing
             if action not in actions:
                 actions[action] = []
             actions[action].append((None,value))
 
-    if previous_action is not None:
-        if previous_action not in actions:
-            actions[previous_action] = []
-        actions[previous_action].append((None,previous_value))
+    # process renames (all entries are 'A')
+    for source in renames:
+        if os.path.exists(source):
+            # copy
+            if 'C' not in actions:
+                actions['C'] = []
+            actions['C'].append((source,renames[source]))
+        else:
+            # rename
+            if 'V' not in actions:
+                actions['V'] = []
+            actions['V'].append((source,renames[source]))
 
     new_lines = []
-    for key in ['M', 'A', 'V', 'R']:
+    for key in ['M',   # modified
+                'A',   # added
+                'V',   # renamed
+                'R',   # removed
+                'C']:  # copied
         if key in actions:
             for item in actions[key]:
                 if item[0] is None:
                     new_lines.append('%s %s' % (key, item[1]))
-                else:
-                    new_lines.append('%s %s -> %s' % (key, item[0], item[1]))
+                elif key == 'V':
+                    new_lines.append('%s %s --> %s' % (key, item[0], item[1]))
+                elif key == 'C':
+                    new_lines.append('%s %s ==> %s' % (key, item[0], item[1]))
 
     return new_lines
 
