@@ -259,7 +259,7 @@ class Log(object):
 
                 if has_file_changes:
                     print('changes:')
-                    command = ['hg', 'status', '--change', id]
+                    command = ['hg', 'status', '-C', '--change', id]
                     output = subprocess.Popen(command, stdout=subprocess.PIPE).communicate()[0].decode("utf-8")
                     if len(output) == 0:
                         print("ERROR: Invalid revision provided", file=sys.stderr)
