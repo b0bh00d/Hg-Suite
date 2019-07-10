@@ -569,6 +569,13 @@ This command is a thin wrapper around the `hg incoming` command, with
 some 'pretty printing' support.  The module is employed by the `update`
 command for its delta printing.
 
+#### log
+Two useful Mercurial commands are compressed into the `log` command to
+display log output with some enhanced visuals over vanilla Mercurial.  The
+large change with this command is that file changes for a given changeset,
+if any, are displayed with the Hg Suite `status` formatting instead of just
+being listed on a single line.
+
 # Mercurial-based macros
 
 I'm including here the command-line macros I use (Windows, in this
@@ -594,6 +601,7 @@ The "$T" token in the macros below is a [Cmdr](https://github.com/cmderdev/cmder
 * `unstage=py %PYHG%\PyHg.py unstage $*`
 * `staged=py %PYHG%\PyHg.py staged $*`
 * `sync=py %PYHG%\PyHg.py update $*`
+* `log=py %PYHG%\PyHg.py log $*`
 * `outgoing=hg -v outgoing`
 * `pull=hg pull`
 * `reset=hg revert --all`
