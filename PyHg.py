@@ -32,7 +32,7 @@ import tempfile
 import atexit
 
 from argparse import ArgumentParser
-from PyHg_lib import format_seconds
+from PyHg_lib import format_seconds, Colors
 
 #--------------------------------------------
 
@@ -81,30 +81,48 @@ class Options(object):
         #     if config.has_section("hgsuite"):
         #         config_settings = config.items("hgsuite")
 
+        # first, look at the command being executed.  we will customize
+        # the options being parsed for certain commands
+
+        cmd_set = ['update', 'commit', 'stage', 'unstage', 'staged', 'incoming',
+                   'status', 'log', 'rebase', 'shelve', 'shelved', 'restore', #'backup',
+                   'conflicts', 'push', 'mergeheads', 'diff', 'switch']
+
+        self.action = None
+        if sys.argv[1] in cmd_set:
+            self.action = sys.argv[1]
+        else:
+            print("ERROR: Unknown action:", sys.argv[1], file=sys.stderr)
+            sys.exit(1)
+
         # now process any command-line options
 
         parser = ArgumentParser(description="Hg Suite")
         parser.add_argument("-B", "--use-batch", dest="ansi_color_requires_batch", default=((os.name == 'nt') and ('CMDER_ROOT' not in os.environ)), type=bool, help="Run output through a batch file for ANSI processing.")
-        parser.add_argument("-d", "--detail", dest="detailed", action="store_true", default=False, help="Include as much detail as possible.")
-        parser.add_argument("-c", "--comment", dest="comment", default='', help="Provide a comment for commands requiring one.")
-        parser.add_argument("-a", "--process-all", action="store_true", dest="process_all", default=False, help="Process all in commands that have multiple processing options available.")
-        parser.add_argument("-p", "--path", dest="use_path", default=".", help="Specify a path on which to operate (typically used with the 'shelve' functionality).")
-        parser.add_argument("-i", "--include", dest="include_filter", default=None, help="Specify a filter value to include detected modifications.")
-        parser.add_argument("-X", "--exclude", action="append", dest="exclude_filter", default=[], help="Specify a filter value to exclude detected modifications.")
-        parser.add_argument("-e", "--erase", action="store_true", dest="erase_cache", help="Erase any cache the command may have available or may have created.")
-        parser.add_argument("-l", "--log", dest="log_file", default=None, help="Use the specified text file as the commit log.")
-        parser.add_argument("-m", "--message", dest="commit_message", default=None, help="Enter a message for use by the command.")
-        parser.add_argument("-w", "--wrap", dest="wrap_at", default=80, help="Set the column offset for wrapping log text.")
-        parser.add_argument("-P", "--push", action="store_true", dest="push_changes", default=False, help="Push committed changes upstream.")
-        parser.add_argument("-x", "--pushex", action="store_true", dest="push_external", default=False, help="Push committed changes to an external destination.")
-        parser.add_argument("-o", "--overwrite", action="store_true", dest="overwrite", default=False, help="Force replacement of modified destination (no merge check).")
-        parser.add_argument("-M", "--mergeonly", action="store_true", dest="merge_only", default=False, help="Skip the final commit step in a rebase operation.")
-        parser.add_argument("-A", "--authtoken", dest="auth_token", default=None, help="Insert an authorization token for the commit.")
-        parser.add_argument("-n", "--no-revert", dest="no_revert", action="store_true", default=False, help="Bypass any implicit reverting of changes in the working copy.")
-        parser.add_argument("-r", "--extra", dest="extra_files", action="append", default=[], help="Specify additional, non-managed files to be processed.")
-        parser.add_argument("-V", "--ide-state", dest="ide_state", action="store_true", default=False, help="When shelving, save the current state of the Visual Studio IDE for all defined solutions.")
-        parser.add_argument("-s", "--stage-name", dest="stage_name", default=None, help="Specify the default staging area to target.")
-        parser.add_argument("-S", "--snapshot", dest="snapshot", action="store_true", default=False, help="Perform an action that is time-based.")
+        if self.action == 'log':
+            parser.add_argument("-l", "--limit", dest="log_limit", default=0, help="Limit the number of log entries displayed.")
+            parser.add_argument("-r", "--revision", dest="log_rev", default='', help="Display log info for the specified changeset revision.")
+        else:
+            parser.add_argument("-d", "--detail", dest="detailed", action="store_true", default=False, help="Include as much detail as possible.")
+            parser.add_argument("-c", "--comment", dest="comment", default='', help="Provide a comment for commands requiring one.")
+            parser.add_argument("-a", "--process-all", action="store_true", dest="process_all", default=False, help="Process all in commands that have multiple processing options available.")
+            parser.add_argument("-p", "--path", dest="use_path", default=".", help="Specify a path on which to operate (typically used with the 'shelve' functionality).")
+            parser.add_argument("-i", "--include", dest="include_filter", default=None, help="Specify a filter value to include detected modifications.")
+            parser.add_argument("-X", "--exclude", action="append", dest="exclude_filter", default=[], help="Specify a filter value to exclude detected modifications.")
+            parser.add_argument("-e", "--erase", action="store_true", dest="erase_cache", help="Erase any cache the command may have available or may have created.")
+            parser.add_argument("-l", "--log", dest="log_file", default=None, help="Use the specified text file as the commit log.")
+            parser.add_argument("-m", "--message", dest="commit_message", default=None, help="Enter a message for use by the command.")
+            parser.add_argument("-w", "--wrap", dest="wrap_at", default=80, help="Set the column offset for wrapping log text.")
+            parser.add_argument("-P", "--push", action="store_true", dest="push_changes", default=False, help="Push committed changes upstream.")
+            parser.add_argument("-x", "--pushex", action="store_true", dest="push_external", default=False, help="Push committed changes to an external destination.")
+            parser.add_argument("-o", "--overwrite", action="store_true", dest="overwrite", default=False, help="Force replacement of modified destination (no merge check).")
+            parser.add_argument("-M", "--mergeonly", action="store_true", dest="merge_only", default=False, help="Skip the final commit step in a rebase operation.")
+            parser.add_argument("-A", "--authtoken", dest="auth_token", default=None, help="Insert an authorization token for the commit.")
+            parser.add_argument("-n", "--no-revert", dest="no_revert", action="store_true", default=False, help="Bypass any implicit reverting of changes in the working copy.")
+            parser.add_argument("-R", "--extra", dest="extra_files", action="append", default=[], help="Specify additional, non-managed files to be processed.")
+            parser.add_argument("-V", "--ide-state", dest="ide_state", action="store_true", default=False, help="When shelving, save the current state of the Visual Studio IDE for all defined solutions.")
+            parser.add_argument("-s", "--stage-name", dest="stage_name", default=None, help="Specify the default staging area to target.")
+            parser.add_argument("-S", "--snapshot", dest="snapshot", action="store_true", default=False, help="Perform an action that is time-based.")
 
         options, args = parser.parse_known_args()
 
@@ -113,37 +131,41 @@ class Options(object):
         # use ANSI terminal color codes?
         self.ansi_color = True # options.ansi_color
 
-        # update all subfolders?
-        self.process_all = options.process_all
-
         # will the interpreter only process color codes from a batch file?
         self.ansi_color_requires_batch = options.ansi_color_requires_batch
 
-        self.detailed = options.detailed
-        self.comment = options.comment
-        self.use_path = options.use_path
-        self.include_filter = options.include_filter
-        self.exclude_filter = options.exclude_filter
-        self.erase_cache = options.erase_cache
-        self.wrap_at = options.wrap_at
-        self.push_external = options.push_external
-        self.push_changes = True if options.push_external else options.push_changes
-        self.overwrite = options.overwrite
-        self.merge_only = options.merge_only
-        self.auth_token = options.auth_token
-        self.no_revert  = options.no_revert
-        self.extra_files = options.extra_files
-        self.ide_state = options.ide_state
-        self.stage_name = options.stage_name
-        self.snapshot = options.snapshot
+        if self.action == 'log':
+            self.log_limit = options.log_limit
+            self.log_rev = options.log_rev
+        else:
+            # update all subfolders?
+            self.process_all = options.process_all
 
-        self.log_file = None
-        if options.log_file and os.path.exists(options.log_file):
-            self.log_file = options.log_file
+            self.detailed = options.detailed
+            self.comment = options.comment
+            self.use_path = options.use_path
+            self.include_filter = options.include_filter
+            self.exclude_filter = options.exclude_filter
+            self.erase_cache = options.erase_cache
+            self.wrap_at = options.wrap_at
+            self.push_external = options.push_external
+            self.push_changes = True if options.push_external else options.push_changes
+            self.overwrite = options.overwrite
+            self.merge_only = options.merge_only
+            self.auth_token = options.auth_token
+            self.no_revert  = options.no_revert
+            self.extra_files = options.extra_files
+            self.ide_state = options.ide_state
+            self.stage_name = options.stage_name
+            self.snapshot = options.snapshot
 
-        self.commit_message = None
-        if options.commit_message:
-            self.commit_message = options.commit_message
+            self.log_file = None
+            if options.log_file and os.path.exists(options.log_file):
+                self.log_file = options.log_file
+
+            self.commit_message = None
+            if options.commit_message:
+                self.commit_message = options.commit_message
 
         # gather some information about the Mercurial working copy
 
@@ -152,17 +174,6 @@ class Options(object):
         self.branch = output.split('\n')[0]
         if 'no repository found' in self.branch:
             self.branch = None
-
-        cmd_set = ['update', 'commit', 'stage', 'unstage', 'staged', 'incoming',
-                   'status', 'rebase', 'shelve', 'shelved', 'restore', #'backup',
-                   'conflicts', 'push', 'mergeheads', 'diff', 'switch']
-
-        self.action = None
-        if args[0] in cmd_set:
-            self.action = args[0]
-        else:
-            print("ERROR: Unknown action:", args[0], file=sys.stderr)
-            sys.exit(1)
 
         self.args = args[1:]
 
@@ -201,8 +212,11 @@ if __name__ == "__main__":
         from Update import Update
         Update(options)
     elif options.action == 'status':
-        from Status import Status
+        from Info import Status
         pyhg_action = Status()
+    elif options.action == 'log':
+        from Info import Log
+        Log(options)
     elif options.action == 'incoming':
         from Incoming import Incoming
         Incoming(options)
@@ -260,6 +274,6 @@ if __name__ == "__main__":
 
     if os.name != 'nt':
         # reset the console colors to defaults
-        print('\033[1;0m')
+        print(Colors['Reset'])
 
     sys.exit(result)

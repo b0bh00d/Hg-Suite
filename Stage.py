@@ -36,7 +36,7 @@ try:
 except:
     import pickle as cPickle
 
-import Status
+import Info
 
 from PyHg_lib import find_hg_root, fixup_renames, format_seconds
 
@@ -258,7 +258,7 @@ class Stage(StageIO):
         super(Stage, self).save_stage_db(stage_db, stage_db_file)
 
         if len(added_files) or len(refreshed_files):
-            s = Status.Status()
+            s = Info.Status()
             if len(added_files):
                 print('The following new %s entries were added to the "%s" staging area:' % ('snapshot' if options.snapshot else 'reference', stage_name))
                 s.process_lines(added_files, options)
@@ -348,7 +348,7 @@ class Unstage(StageIO):
 
             if len(unstaged_entries):
                 print('The following existing entries were removed from the "%s" staging area:' % stage_name)
-                s = Status.Status()
+                s = Info.Status()
                 s.process_lines(unstaged_entries, options)
             else:
                 print('No unique entries were removed from the "%s" staging area.' % stage_name)
@@ -368,7 +368,7 @@ class Staged(StageIO):
         if len(staged_entries):
             for stage in staged_entries:
                 print('The following entries are pending in the "%s" staging area:' % stage)
-                s = Status.Status()
+                s = Info.Status()
                 s.process_lines(staged_entries[stage], options)
         else:
             if self.message is None:

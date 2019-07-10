@@ -29,7 +29,7 @@ import os
 import re
 import subprocess
 
-from PyHg_lib import Changeset
+from PyHg_lib import Changeset, Colors
 
 #--------------------------------------------
 
@@ -142,11 +142,21 @@ class Incoming(object):
                         lines.append('@echo off')
                         lines.append('set FG=%_fg')
                         lines.append('set BG=%_bg')
-                    lines.append('echo \033[1;32m%s "\033[1;35m%s\033[1;32m".\n' % (no_changes_message, self.options.branch))
+                    lines.append('echo %s%s "%s%s%s".\n' % \
+                        (Colors['BrightGreen'],
+                         no_changes_message,
+                         Colors['BrightMagenta'],
+                         self.options.branch,
+                         Colors['BrightGreen']))
                     if os.name == 'nt':
                         lines.append('color %FG on %BG')
                 else:
-                    lines.append('\033[1;32m%s "\033[1;35m%s\033[1;32m".' % (no_changes_message, self.options.branch))
+                    lines.append('%s%s "%s%s%s".' % \
+                        (Colors['BrightGreen'],
+                         no_changes_message,
+                         Colors['BrightMagenta'],
+                         self.options.branch,
+                         Colors['BrightGreen']))
             else:
                 lines.append('%s "%s".' % (no_changes_message, self.options.branch))
         else:
@@ -158,10 +168,15 @@ class Incoming(object):
                         lines.append('set BG=%_bg')
                     for cs in self.changesets:
                         cs_user = cs.user.split()[0] if ' ' in cs.user else cs.user
-                        lines.append('echo `\033[1;35m%s: \033[1;32m(%s)`' % (cs.changeset, cs_user))
+                        lines.append('echo `%s%s: %s(%s)`' % \
+                            (Colors['BrightMagenta'],
+                             cs.changeset,
+                             Colors['BrightGreen'],
+                             cs_user))
                         if getattr(cs, 'files', None) != None:
                             for file in cs.files:
-                                lines.append('echo `   \033[1;32m- \033[1;33m%s`' % file)
+                                lines.append('echo `   %s- %s%s`' % \
+                                    (Colors['BrightGreen'], file, Colors['BrightYellow']))
                         for line in cs.description:
                             if len(line):
                                 first_line = True
@@ -177,18 +192,20 @@ class Incoming(object):
                                         #text = re.sub(' ', '&nbsp;', text)
                                         if len(text) != 0:
                                             if first_line:
-                                                batch_line += 'echo `   \033[1;35m*'
+                                                batch_line += 'echo `   %s*' % Colors['BrightMagenta']
                                                 first_line = False
                                                 max_width = 78
                                             else:
-                                                batch_line += 'echo `   \033[1;35m...'
-                                            batch_line += ' \033[1;32m%s`\n' % text
+                                                batch_line += 'echo `   %s...' % Colors['BrightMagenta']
+                                            batch_line += ' %s%s`\n' % (Colors['BrightGreen'], text)
                                             lines.append(batch_line)
                                 if len(line) != 0:
                                     if first_line:
-                                        lines.append('echo `   \033[1;35m* \033[1;32m%s`' % line)
+                                        lines.append('echo `   %s* %s%s`' % \
+                                            (Colors['BrightMagenta'], Colors['BrightGreen'], line))
                                     else:
-                                        lines.append('echo `   \033[1;35m... \033[1;32m%s`' % line)
+                                        lines.append('echo `   %s... %s%s`' % \
+                                            (Colors['BrightMagenta'], Colors['BrightGreen'], line))
                             else:
                                 lines.append('')
 
@@ -201,7 +218,7 @@ class Incoming(object):
 
                     for ndx in range(len(lines)):
                         if lines[ndx] == '':
-                            lines[ndx] = 'echo `   \033[1;35m*`'
+                            lines[ndx] = 'echo `   %s*`' % Colors['BrightMagenta']
                         elif lines[ndx].startswith('-'):
                             lines[ndx] = 'echo.\n'
 
@@ -210,10 +227,10 @@ class Incoming(object):
                 else:
                     for cs in self.changesets:
                         cs_user = cs.user.split()[0] if ' ' in cs.user else cs.user
-                        lines.append('\033[1;35m%s: \033[1;32m(%s)' % (cs.changeset, cs_user))
+                        lines.append('%s%s: %s(%s)' % (Colors['BrightMagenta'], cs.changeset, Colors['BrightGreen'], cs_user))
                         if getattr(cs, 'files', None) != None:
                             for file in cs.files:
-                                lines.append('   \033[1;32m- \033[1;33m%s' % file)
+                                lines.append('   %s- %s%s' % (Colors['BrightGreen'], Colors['BrightYellow'], file))
                         for line in cs.description:
                             first_line = True
                             max_width = 80
@@ -234,16 +251,16 @@ class Incoming(object):
                                             line = line[x+1:]
                                     if len(text) != 0:
                                         if first_line:
-                                            lines.append('   \033[1;35m* \033[1;32m%s' % text)
+                                            lines.append('   %s* %s%s' % (Colors['BrightMagenta'], Colors['BrightGreen'], text))
                                             first_line = False
                                             max_width = 78
                                         else:
-                                            lines.append('   \033[1;35m... \033[1;32m%s' % text)
+                                            lines.append('   %s... %s%s' % (Colors['BrightMagenta'], Colors['BrightGreen'], text))
                             if len(line) != 0:
                                 if first_line:
-                                    lines.append('   \033[1;35m* \033[1;32m%s' % line)
+                                    lines.append('   %s* %s%s' % (Colors['BrightMagenta'], Colors['BrightGreen'], line))
                                 else:
-                                    lines.append('   \033[1;35m... \033[1;32m%s' % line)
+                                    lines.append('   %s... %s%s' % (Colors['BrightMagenta'], Colors['BrightGreen'], line))
             else:
                 for cs in self.changesets:
                     lines.append('%s:' % cs.changeset)

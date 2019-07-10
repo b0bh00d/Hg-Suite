@@ -34,13 +34,14 @@ try:
 except:
     pass
 
-from Status import Status
+from Info import Status
 from PyHg_lib import wrap_line, \
                      wrap_lines, \
                      find_hg_root, \
                      is_valid, \
                      extract_comments, \
-                     DISPLAY_COMMENT
+                     DISPLAY_COMMENT,
+                     Colors
 from Stage import StageEntry, StageIO, Staged
 
 #--------------------------------------------
@@ -212,9 +213,9 @@ class Commit(object):
                 stage_prefix = '[%s] ' % (options.stage_name if options.stage_name is not None else staged_entries.keys()[0])
             if options.ansi_color:
                 if options.ansi_color_requires_batch:
-                    batch_text += 'echo %s\033[1;33m%s\n' % (stage_prefix, filename)
+                    batch_text += 'echo %s%s%s\n' % (stage_prefix, Colors['BrightYellow'], filename)
                 else:
-                    print('%s\033[1;33m%s' % (stage_prefix, filename))
+                    print('%s%s%s' % (stage_prefix, Colors['BrightYellow'], filename))
             else:
                 print('%s%s' % (stage_prefix, line))
 

@@ -29,7 +29,7 @@ import os
 import re
 import subprocess
 
-#from Status import Status
+#from Info import Status
 
 #--------------------------------------------
 

@@ -66,6 +66,23 @@ __valid_extensions = [
                     ]
 DISPLAY_PLAIN, DISPLAY_COMMENT, DISPLAY_ANSI, DISPLAY_HTML = range(0, 4)
 
+Colors = {
+    'Reset'         : '\033[0m',
+    'White'         : '\033[37m',
+    'Cyan'          : '\033[36m',
+    'Magenta'       : '\033[35m',
+    'Red'           : '\033[31m',
+    'Green'         : '\033[32m',
+    'Yellow'        : '\033[33m',
+    'BrightBlack'   : '\033[1;90m',
+    'BrightWhite'   : '\033[1;97m',
+    'BrightCyan'    : '\033[1;96m',
+    'BrightMagenta' : '\033[1;95m',
+    'BrightRed'     : '\033[1;91m',
+    'BrightGreen'   : '\033[1;92m',
+    'BrightYellow'  : '\033[1;93m',
+}
+
 # from: https://stackoverflow.com/questions/898669/how-can-i-detect-if-a-file-is-binary-non-text-in-python
 __textchars = bytearray({7,8,9,10,12,13,27} | set(range(0x20, 0x100)) - {0x7f})
 __is_binary_string = lambda bytes: bool(bytes.translate(None, __textchars))
@@ -244,13 +261,13 @@ def make_path(file_name):
     return True
 
 def colorize_status(lines):
-    default_color = '\033[1;37m'
-    modified_color = '\033[1;36m'
-    added_color = '\033[1;35m'
-    removed_color = '\033[1;31m'
-    renamed_color = '\033[1;32m'
-    copied_color = '\033[1;33m'
-    reset_color = ''
+    default_color = Colors['BrightWhite']
+    modified_color = Colors['BrightCyan']
+    added_color = Colors['BrightMagenta']
+    removed_color = Colors['BrightRed']
+    renamed_color = Colors['BrightGreen']
+    copied_color = Colors['BrightYellow']
+    reset_color = Colors['Reset']
 
     #if 'CMDER_ROOT' in sys.environ:
     #    # operating under Cmder

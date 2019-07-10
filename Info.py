@@ -37,7 +37,8 @@ from PyHg_lib import find_hg_root, \
                      fixup_renames, \
                      is_valid, \
                      marshall_comments, \
-                     format_seconds
+                     format_seconds, \
+                     Colors
 
 #--------------------------------------------
 
@@ -183,13 +184,13 @@ class Status(Action):
                     batch_text += 'echo %s\n' % line[3]
                     if comments:
                         for comment in comments:
-                            batch_text += 'echo \033[1;32m%s\n' % comment
+                            batch_text += 'echo %s%s\n' % (Colors['BrightGreen'], comment)
                 else:
                     print(line[3])
                     if comments:
                         for comment in comments:
-                            print('\033[1;32m%s' % comment)
-                    print('\033[0m', end='')    # reset color
+                            print('%s%s' % (Colors['BrightGreen'], comment))
+                    print(Colors['Reset'], end='')    # reset color
             else:
                 print(line[0], line[1])
                 if comments:
@@ -202,3 +203,75 @@ class Status(Action):
                     batch_text += 'color %FG on %BG\n'
                 open(options.batch_file_name, 'w').write(batch_text)
                 os.system(options.batch_file_name)
+
+class Log(object):
+    def __init__(self, options):
+        if not options.branch:
+            return
+
+        command = ['hg', 'log', '-v']
+        if len(options.log_rev) != 0:
+            command += ['-r', options.log_rev]
+        elif options.log_limit != 0:
+            command += ['-l', options.log_limit]
+
+        output = subprocess.Popen(command, stdout=subprocess.PIPE).communicate()[0].decode("utf-8")
+        if len(output) == 0:
+            print("ERROR: Invalid revision provided", file=sys.stderr)
+            sys.exit(1)
+
+        lines = output.split('\n')
+
+        blank_count = 0
+        has_file_changes = False
+        id = ''
+
+        i = 0
+        while i < len(lines):
+            line = lines[i]
+            if line.startswith('changeset: '):
+                if len(id) != 0:
+                    print('-' * 40)
+                id = line.split(' ')[-1].split(':')[1]
+                print('%s%s%s' % (Colors['BrightGreen'], line, Colors['Reset']))
+                has_file_changes = False
+            elif line.startswith('description:'):
+                print(line)
+
+                blank_count = 0
+                i += 1
+                while i < len(lines):
+                    if len(lines[i].strip()) == 0:
+                        blank_count += 1
+                    else:
+                        if blank_count:
+                            print('\n' * blank_count)
+                            blank_count = 0
+                        print('%s%s%s' % (Colors['BrightYellow'], lines[i], Colors['Reset']))
+
+                    i += 1
+                    try:
+                        if(lines[i].startswith('changeset: ')):
+                            i -= 1 
+                            break
+                    except IndexError:
+                        pass    # we've exceeded the array bounds
+
+                if has_file_changes:
+                    print('changes:')
+                    command = ['hg', 'status', '--change', id]
+                    output = subprocess.Popen(command, stdout=subprocess.PIPE).communicate()[0].decode("utf-8")
+                    if len(output) == 0:
+                        print("ERROR: Invalid revision provided", file=sys.stderr)
+                        sys.exit(1)
+
+                    change_lines = fixup_renames(output.split('\n'))
+                    Status().process_lines(change_lines, options)
+
+                print(Colors['Reset'])
+            elif line.startswith('files:'):
+                has_file_changes = True
+            else:
+                print(line)
+
+            i += 1
