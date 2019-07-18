@@ -38,7 +38,7 @@ class Rebase(object):
         if not options.branch:
             return
 
-        if len(options.args) == 0:
+        if (options.source_branch is None) or (len(options.source_branch) == 0):
             print("ERROR: Source branch name required for rebase", file=sys.stderr)
             sys.exit(1)
 
@@ -48,9 +48,7 @@ class Rebase(object):
             print("ERROR: Working copy has uncommittted modifications", file=sys.stderr)
             sys.exit(1)
 
-        source_branch = options.args[0]
-
-        if source_branch.startswith(options.branch) and (len(source_branch) > len(options.branch)):
+        if options.source_branch.startswith(options.branch) and (len(options.source_branch) > len(options.branch)):
             # they're merging upstream from a sub-branch.  make sure this is what
             # they want!
             if sys.version_info[0] > 2:
@@ -60,15 +58,15 @@ class Rebase(object):
             if (len(approval) == 0) or (approval.lower() == 'n'):
                 return
 
-        incoming = Incoming(options, command=['hg', 'merge', '-P', '-v', source_branch], database=True, ignore_branch=True)
+        incoming = Incoming(options, command=['hg', 'merge', '-P', '-v', options.source_branch], database=True, ignore_branch=True)
 
         if len(incoming.changesets) > 0:
             log_text = incoming.format(Incoming.STYLE_PLAIN)
-            command = ['hg', 'merge', options.args[0]]
+            command = ['hg', 'merge', options.source_branch]
             output = subprocess.Popen(command, stdout=subprocess.PIPE).communicate()[0].decode("utf-8")
             if not options.merge_only:
-                msg = 'rebase with %s' % options.args[0]
-                if options.auth_token is not None:
+                msg = 'rebase with %s' % options.source_branch
+                if hasattr(options, 'auth_token') and (options.auth_token is not None):
                     msg += ' (%s)' % options.auth_token
                 command = ['hg', 'commit', '-m', msg]
                 output = subprocess.Popen(command, stdout=subprocess.PIPE).communicate()[0].decode("utf-8")

@@ -81,48 +81,78 @@ class Options(object):
         #     if config.has_section("hgsuite"):
         #         config_settings = config.items("hgsuite")
 
-        # first, look at the command being executed.  we will customize
-        # the options being parsed for certain commands
+        # first, look at the action being executed.  we will customize
+        # the options being parsed by the action
 
         cmd_set = ['update', 'commit', 'stage', 'unstage', 'staged', 'incoming',
                    'status', 'log', 'rebase', 'shelve', 'shelved', 'restore', #'backup',
                    'conflicts', 'push', 'mergeheads', 'diff', 'switch']
+        StageIO_dependents = ['stage', 'unstage', 'staged', 'commit', 'status', 'shelve', 'restore']
 
         self.action = None
         if sys.argv[1] in cmd_set:
             self.action = sys.argv[1]
+            del sys.argv[1]     # remove it so positional arguments don't get confused
         else:
             print("ERROR: Unknown action:", sys.argv[1], file=sys.stderr)
             sys.exit(1)
 
-        # now process any command-line options
+        # now process any command-line options for the current action
 
-        parser = ArgumentParser(description="Hg Suite")
+        parser = ArgumentParser(description="Hg Suite", prog=self.action)
         parser.add_argument("-B", "--use-batch", dest="ansi_color_requires_batch", default=((os.name == 'nt') and ('CMDER_ROOT' not in os.environ)), type=bool, help="Run output through a batch file for ANSI processing.")
         if self.action == 'log':
             parser.add_argument("-l", "--limit", dest="log_limit", default=0, help="Limit the number of log entries displayed.")
             parser.add_argument("-r", "--revision", dest="log_rev", default='', help="Display log info for the specified changeset revision.")
+            parser.add_argument("-u", "--user", dest="log_user", default='', help="Display log info for changes applied by a specific user.")
+            parser.add_argument("-b", "--branch", dest="log_branch", default='', help="Display log info for the specified branch.")
+            parser.add_argument("-d", "--date", dest="log_date", default='', help="Select revisions matching the provided date spec.")
+            parser.add_argument("-k", "--keyword", dest="log_keyword", default='', help="Select revisions containing the case-insensitive text.")
+            parser.add_argument("-M", "--no-merges", dest="log_no_merges", action="store_true", default=False, help="Exclude revisions that are merges.")
+            parser.add_argument("-T", "--template", dest="log_template", default='', help="Display with template.")
+            parser.add_argument("-v", "--verbose", dest="detailed", action="store_true", default=False, help="Include as much detail as possible.")
         else:
-            parser.add_argument("-d", "--detail", dest="detailed", action="store_true", default=False, help="Include as much detail as possible.")
-            parser.add_argument("-c", "--comment", dest="comment", default='', help="Provide a comment for commands requiring one.")
-            parser.add_argument("-a", "--process-all", action="store_true", dest="process_all", default=False, help="Process all in commands that have multiple processing options available.")
-            parser.add_argument("-p", "--path", dest="use_path", default=".", help="Specify a path on which to operate (typically used with the 'shelve' functionality).")
-            parser.add_argument("-i", "--include", dest="include_filter", default=None, help="Specify a filter value to include detected modifications.")
-            parser.add_argument("-X", "--exclude", action="append", dest="exclude_filter", default=[], help="Specify a filter value to exclude detected modifications.")
-            parser.add_argument("-e", "--erase", action="store_true", dest="erase_cache", help="Erase any cache the command may have available or may have created.")
-            parser.add_argument("-l", "--log", dest="log_file", default=None, help="Use the specified text file as the commit log.")
-            parser.add_argument("-m", "--message", dest="commit_message", default=None, help="Enter a message for use by the command.")
-            parser.add_argument("-w", "--wrap", dest="wrap_at", default=80, help="Set the column offset for wrapping log text.")
-            parser.add_argument("-P", "--push", action="store_true", dest="push_changes", default=False, help="Push committed changes upstream.")
-            parser.add_argument("-x", "--pushex", action="store_true", dest="push_external", default=False, help="Push committed changes to an external destination.")
-            parser.add_argument("-o", "--overwrite", action="store_true", dest="overwrite", default=False, help="Force replacement of modified destination (no merge check).")
-            parser.add_argument("-M", "--mergeonly", action="store_true", dest="merge_only", default=False, help="Skip the final commit step in a rebase operation.")
-            parser.add_argument("-A", "--authtoken", dest="auth_token", default=None, help="Insert an authorization token for the commit.")
-            parser.add_argument("-n", "--no-revert", dest="no_revert", action="store_true", default=False, help="Bypass any implicit reverting of changes in the working copy.")
-            parser.add_argument("-R", "--extra", dest="extra_files", action="append", default=[], help="Specify additional, non-managed files to be processed.")
-            parser.add_argument("-V", "--ide-state", dest="ide_state", action="store_true", default=False, help="When shelving, save the current state of the Visual Studio IDE for all defined solutions.")
-            parser.add_argument("-s", "--stage-name", dest="stage_name", default=None, help="Specify the default staging area to target.")
-            parser.add_argument("-S", "--snapshot", dest="snapshot", action="store_true", default=False, help="Perform an action that is time-based.")
+            # many commands are dependent on this
+            if self.action in StageIO_dependents:
+                parser.add_argument("-s", "--stage-name", dest="stage_name", default=None, help="Specify the default staging area to use.")
+
+            if self.action == 'commit':
+                parser.add_argument("-l", "--log", dest="log_file", default=None, help="Use the specified text file as the commit log.")
+                parser.add_argument("-m", "--message", dest="commit_message", default=None, help="Enter a message for use by the command.")
+                parser.add_argument("-w", "--wrap", dest="wrap_at", default=80, help="Set the column offset for wrapping log text.")
+                parser.add_argument("-P", "--push", action="store_true", dest="push_changes", default=False, help="Push committed changes upstream.")
+                parser.add_argument("-x", "--pushex", action="store_true", dest="push_external", default=False, help="Push committed changes to an external destination.")
+                parser.add_argument("-A", "--authtoken", dest="auth_token", default=None, help="Insert an authorization token for the commit.")
+
+            if 'shelve' in self.action:
+                parser.add_argument('shelf_name', metavar='MICROBRANCH', default='', nargs='?', help='Optional microbranch id for the operation.')
+                parser.add_argument("-n", "--no-revert", dest="no_revert", action="store_true", default=False, help="Bypass any implicit reverting of changes in the working copy.")
+                parser.add_argument("-c", "--comment", dest="comment", default='', help="Provide a comment for shelved microbranch.")
+                parser.add_argument("-p", "--path", dest="use_path", default=".", help="Specify a path on which to operate.")
+                parser.add_argument("-i", "--include", dest="include_filter", default=None, help="Specify a filter value to include detected modifications.")
+                parser.add_argument("-X", "--exclude", action="append", dest="exclude_filter", default=[], help="Specify a filter value to exclude detected modifications.")
+                parser.add_argument("-r", "--extra", dest="extra_files", action="append", default=[], help="Specify additional, non-managed files to be processed.")
+                parser.add_argument("-V", "--ide-state", dest="ide_state", action="store_true", default=False, help="When shelving, save the current state of the Visual Studio IDE for all defined solutions.")
+                if self.action == 'shelved':
+                    parser.add_argument("-v", "--verbose", dest="detailed", action="store_true", default=False, help="Include as much detail as possible.")
+
+            if self.action == 'restore':
+                parser.add_argument('shelf_name', metavar='MICROBRANCH', type=str, default='', nargs='?', help='Optional source microbranch for the restore operation.')
+                parser.add_argument("-o", "--overwrite", action="store_true", dest="overwrite", default=False, help="Force replacement of modified destination (no merge check).")
+                parser.add_argument("-e", "--erase", action="store_true", dest="erase_cache", help="Erase any cache the command may have available or may have created.")
+
+            if self.action == 'rebase':
+                parser.add_argument('source_branch', metavar='BRANCH', type=str, help='Required source branch for the rebase operation.')
+                parser.add_argument("-M", "--mergeonly", action="store_true", dest="merge_only", default=False, help="Skip the final commit step in a rebase operation.")
+
+            if 'stage' in self.action:
+                if self.action == 'stage':
+                    parser.add_argument("-S", "--snapshot", dest="snapshot", action="store_true", default=False, help="Perform an action that is time-based.")
+                if (self.action == 'stage') or (self.action == 'unstage'):
+                    parser.add_argument("-e", "--erase", action="store_true", dest="erase_cache", help="Erase any cache the command may have available or may have created.")
+
+            if (self.action == 'update') or (self.action == 'status'):
+                parser.add_argument("-a", "--process-all", action="store_true", dest="process_all", default=False, help="Process all in commands that have multiple processing options available.")
 
         options, args = parser.parse_known_args()
 
@@ -137,35 +167,58 @@ class Options(object):
         if self.action == 'log':
             self.log_limit = options.log_limit
             self.log_rev = options.log_rev
-        else:
-            # update all subfolders?
-            self.process_all = options.process_all
-
             self.detailed = options.detailed
-            self.comment = options.comment
-            self.use_path = options.use_path
-            self.include_filter = options.include_filter
-            self.exclude_filter = options.exclude_filter
-            self.erase_cache = options.erase_cache
-            self.wrap_at = options.wrap_at
-            self.push_external = options.push_external
-            self.push_changes = True if options.push_external else options.push_changes
-            self.overwrite = options.overwrite
-            self.merge_only = options.merge_only
-            self.auth_token = options.auth_token
-            self.no_revert  = options.no_revert
-            self.extra_files = options.extra_files
-            self.ide_state = options.ide_state
-            self.stage_name = options.stage_name
-            self.snapshot = options.snapshot
+            self.log_user = options.log_user
+            self.log_branch = options.log_branch
+            self.log_date = options.log_date
+            self.log_keyword = options.log_keyword
+            self.log_no_merges = options.log_no_merges
+            self.log_template = options.log_template
+        else:
+            if self.action == 'commit':
+                self.log_file = None
+                if options.log_file and os.path.exists(options.log_file):
+                    self.log_file = options.log_file
+                self.commit_message = None
+                if options.commit_message:
+                    self.commit_message = options.commit_message
+                self.wrap_at = options.wrap_at
+                self.push_external = options.push_external
+                self.push_changes = True if options.push_external else options.push_changes
+                self.auth_token = options.auth_token
 
-            self.log_file = None
-            if options.log_file and os.path.exists(options.log_file):
-                self.log_file = options.log_file
+            if 'shelve' in self.action:
+                self.shelf_name = options.shelf_name
+                self.no_revert  = options.no_revert
+                self.comment = options.comment
+                self.use_path = options.use_path
+                self.include_filter = options.include_filter
+                self.exclude_filter = options.exclude_filter
+                self.extra_files = options.extra_files
+                self.ide_state = options.ide_state
+                if self.action == 'shelved':
+                    self.detailed = options.detailed
 
-            self.commit_message = None
-            if options.commit_message:
-                self.commit_message = options.commit_message
+            if self.action == 'restore':
+                self.overwrite = options.overwrite
+                self.erase_cache = options.erase_cache
+                self.shelf_name = options.shelf_name
+
+            if self.action == 'rebase':
+                self.source_branch = options.source_branch
+                self.merge_only = options.merge_only
+
+            if 'stage' in self.action:
+                if self.action == 'stage':
+                    self.snapshot = options.snapshot
+                if (self.action == 'stage') or (self.action == 'unstage'):
+                    self.erase_cache = options.erase_cache
+
+            if (self.action == 'update') or (self.action == 'status'):
+                self.process_all = options.process_all
+
+            if self.action in StageIO_dependents:
+                self.stage_name = options.stage_name
 
         # gather some information about the Mercurial working copy
 
@@ -175,7 +228,7 @@ class Options(object):
         if 'no repository found' in self.branch:
             self.branch = None
 
-        self.args = args[1:]
+        self.args = args
 
         # generate a batch file name for global use
         if os.name == 'nt':

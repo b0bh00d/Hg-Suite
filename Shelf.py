@@ -41,7 +41,12 @@ import sys
 import os
 import time
 import glob
-import urllib
+if sys.version_info[0] > 2:
+    from urllib.parse import quote
+    from urllib.parse import unquote
+else:
+    from urllib import quote
+    from urllib import unquote
 import shutil
 import tempfile
 import subprocess
@@ -95,11 +100,10 @@ class Shelve(Action):
             lines = fixup_renames(output.split('\n'))
 
             shelf_name = 'shelf'
-            if len(options.args):
-                if sys.version_info[0] > 2:
-                    shelf_name = urllib.parse.quote(options.args[0],'')
-                else:
-                    shelf_name = urllib.quote(options.args[0],'')
+            if len(options.shelf_name) != 0:
+                shelf_name = options.shelf_name
+            shelf_name_unquoted = shelf_name
+            shelf_name = quote(shelf_name,'')
 
             if 'mb_root' in kwargs:
                 root = kwargs['mb_root']
@@ -266,10 +270,6 @@ class Shelve(Action):
             manifest = colorize_status(manifest)
 
             if not quiet:
-                if sys.version_info[0] > 2:
-                    shelf_name_unquoted = urllib.parse.unquote(shelf_name)
-                else:
-                    shelf_name_unquoted = urllib.unquote(shelf_name)
                 print('Shelved the following state as microbranch "%s":' % shelf_name_unquoted)
                 for line in manifest:
                     if options.ansi_color:
@@ -319,11 +319,8 @@ class Shelved(Action):
         root = find_mb_root()   # this will not return if we can't find a working location
 
         shelf_name = None
-        if len(options.args):
-            if sys.version_info[0] > 2:
-                shelf_name = urllib.parse.quote(options.args[0],'')
-            else:
-                shelf_name = urllib.quote(options.args[0],'')
+        if len(options.shelf_name) != 0:
+            shelf_name = quote(options.shelf_name,'')
 
         import glob
         files = glob.glob(os.path.join(root,'*.manifest'))
@@ -400,11 +397,11 @@ class Restore(Action):
             return False
 
         shelf_name = 'shelf'
-        if len(options.args):
-            if sys.version_info[0] > 2:
-                shelf_name = urllib.parse.quote(options.args[0],'')
-            else:
-                shelf_name = urllib.quote(options.args[0],'')
+        if len(options.shelf_name) != 0:
+            shelf_name = options.shelf_name
+
+        shelf_name_unquoted = shelf_name
+        shelf_name = quote(shelf_name,'')
 
         working_dir = os.getcwd()
 
@@ -690,10 +687,6 @@ class Restore(Action):
 
             manifest_lines = colorize_status(manifest_lines)
 
-            if sys.version_info[0] > 2:
-                shelf_name_unquoted = urllib.parse.unquote(shelf_name)
-            else:
-                shelf_name_unquoted = urllib.unquote(shelf_name)
             print('\nRestored the following state from microbranch "%s":' % shelf_name_unquoted)
             for line in manifest_lines:
                 if options.ansi_color:
@@ -712,10 +705,6 @@ class Restore(Action):
                     os.system(options.batch_file_name)
 
             if options.erase_cache:
-                if sys.version_info[0] > 2:
-                    shelf_name_unquoted = urllib.parse.unquote(shelf_name)
-                else:
-                    shelf_name_unquoted = urllib.unquote(shelf_name)
                 print('Removing cached microbranch "%s".' % shelf_name_unquoted)
                 try:
                     os.remove(manifest_name)
@@ -734,16 +723,11 @@ class Restore(Action):
             return False
 
         shelf_name = 'shelf'
-        if len(options.args):
-            if sys.version_info[0] > 2:
-                shelf_name = urllib.parse.quote(options.args[0],'')
-            else:
-                shelf_name = urllib.quote(options.args[0],'')
+        if len(options.shelf_name) != 0:
+            shelf_name = options.shelf_name
 
-        if sys.version_info[0] > 2:
-            shelf_name = urllib.parse.quote(shelf_name,'')
-        else:
-            shelf_name = urllib.quote(shelf_name,'')
+        shelf_name = quote(shelf_name, '')
+
         folder = os.path.join(tempfile.gettempdir(), '__%s__' % shelf_name)
         if os.path.exists(folder):
             try:
@@ -778,11 +762,11 @@ class Conflicts(object):
             sys.exit(1)
 
         shelf_name = 'shelf'
-        if len(options.args):
-            if sys.version_info[0] > 2:
-                shelf_name = urllib.parse.quote(options.args[0],'')
-            else:
-                shelf_name = urllib.quote(options.args[0],'')
+        if len(options.shelf_name):
+            shelf_name = options.shelf_name
+
+        shelf_name_unquoted = shelf_name
+        shelf_name = quote(shelf_name, '')
 
         root = find_mb_root()   # this will not return if we can't find a working location
         manifest_file = os.path.join(root, '%s.manifest' % shelf_name)
@@ -790,7 +774,7 @@ class Conflicts(object):
             if shelf_name == 'shelf':
                 print('Working copy has no cached default microbranch.')
             else:
-                print('Cannot access microbranch "%s".' % shelf_name)
+                print('Cannot access microbranch "%s".' % shelf_name_unquoted)
         else:
             manifest_lines = open(manifest_file).readlines()
             del manifest_lines[0]   # delete the comment
@@ -818,11 +802,11 @@ class Conflicts(object):
                         sys.exit(1)
                     if (old_changeset != new_changeset) or (old_crc32 != new_crc32):
                         if conflict_count == 0:
-                            print('Potential conflicts detected for the following "%s" microbranch assets:' % (shelf_name if shelf_name != "shelf" else "default"))
+                            print('Potential conflicts detected for the following "%s" microbranch assets:' % (shelf_name_unquoted if shelf_name_unquoted != "shelf" else "default"))
                         print('\t', file_name)
                         conflict_count += 1
 
             if conflict_count == 0:
-                print('No potential conflicts detected for "%s" microbranch.' % (shelf_name if shelf_name != "shelf" else "default"))
+                print('No potential conflicts detected for "%s" microbranch.' % (shelf_name_unquoted if shelf_name_unquoted != "shelf" else "default"))
 
         os.chdir(working_dir)

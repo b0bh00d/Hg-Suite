@@ -209,69 +209,92 @@ class Log(object):
         if not options.branch:
             return
 
-        command = ['hg', 'log', '-v']
+        command = ['hg', 'log', '-v', '--removed']
         if len(options.log_rev) != 0:
             command += ['-r', options.log_rev]
-        elif options.log_limit != 0:
+        elif len(options.log_user):
+            command += ['-u', options.log_user]
+        elif len(options.log_date):
+            command += ['-d', options.log_date]
+        elif len(options.log_keyword):
+            command += ['-k', options.log_keyword]
+
+        if options.log_limit != 0:
             command += ['-l', options.log_limit]
 
-        output = subprocess.Popen(command, stdout=subprocess.PIPE).communicate()[0].decode("utf-8")
-        if len(output) == 0:
-            print("ERROR: Invalid revision provided", file=sys.stderr)
-            sys.exit(1)
+        if len(options.log_branch):
+            command += ['-b', options.log_branch]
 
-        lines = output.split('\n')
+        if options.log_no_merges:
+            command.append('-M')
 
-        blank_count = 0
-        has_file_changes = False
-        id = ''
+        if options.detailed:
+            command.append('--debug')
 
-        i = 0
-        while i < len(lines):
-            line = lines[i]
-            if line.startswith('changeset: '):
-                if len(id) != 0:
-                    print('-' * 40)
-                id = line.split(' ')[-1].split(':')[1]
-                print('%s%s%s' % (Colors['BrightGreen'], line, Colors['Reset']))
-                has_file_changes = False
-            elif line.startswith('description:'):
-                print(line)
+        if len(options.log_template):
+            command += ['-T', options.log_template]
+            output = subprocess.Popen(command, stdout=subprocess.PIPE).communicate()[0].decode("utf-8")
+            print(output)
+        else:
+            output = subprocess.Popen(command, stdout=subprocess.PIPE).communicate()[0].decode("utf-8")
+            if len(output) == 0:
+                print("ERROR: Invalid revision provided", file=sys.stderr)
+                sys.exit(1)
 
-                blank_count = 0
-                i += 1
-                while i < len(lines):
-                    if len(lines[i].strip()) == 0:
-                        blank_count += 1
-                    else:
-                        if blank_count:
-                            print('\n' * blank_count)
-                            blank_count = 0
-                        print('%s%s%s' % (Colors['BrightYellow'], lines[i], Colors['Reset']))
+            lines = output.split('\n')
 
+            blank_count = 0
+            has_file_changes = False
+            id = ''
+
+            i = 0
+            while i < len(lines):
+                line = lines[i]
+                if line.startswith('changeset: '):
+                    if len(id) != 0:
+                        print('-' * 40)
+                    id = line.split(' ')[-1]
+                    if ':' in id:
+                        id = id.split(':')[1]
+                    print('%s%s%s' % (Colors['BrightGreen'], line, Colors['Reset']))
+                    has_file_changes = False
+                elif line.startswith('description:'):
+                    print(line)
+
+                    blank_count = 0
                     i += 1
-                    try:
-                        if(lines[i].startswith('changeset: ')):
-                            i -= 1 
-                            break
-                    except IndexError:
-                        pass    # we've exceeded the array bounds
+                    while i < len(lines):
+                        if len(lines[i].strip()) == 0:
+                            blank_count += 1
+                        else:
+                            if blank_count:
+                                print('\n' * blank_count)
+                                blank_count = 0
+                            print('%s%s%s' % (Colors['BrightYellow'], lines[i], Colors['Reset']))
 
-                if has_file_changes:
-                    print('changes:')
-                    command = ['hg', 'status', '-C', '--change', id]
-                    output = subprocess.Popen(command, stdout=subprocess.PIPE).communicate()[0].decode("utf-8")
-                    if len(output) == 0:
-                        print("ERROR: Invalid revision provided", file=sys.stderr)
-                        sys.exit(1)
+                        i += 1
+                        try:
+                            if(lines[i].startswith('changeset: ')):
+                                i -= 1 
+                                break
+                        except IndexError:
+                            pass    # we've exceeded the array bounds
 
-                    change_lines = fixup_renames(output.split('\n'))
-                    Status().process_lines(change_lines, options)
+                    if has_file_changes:
+                        print('changes:')
+                        command = ['hg', 'status', '-C', '--change', id]
+                        output = subprocess.Popen(command, stdout=subprocess.PIPE).communicate()[0].decode("utf-8")
+                        if len(output) == 0:
+                            print("ERROR: Invalid revision provided", file=sys.stderr)
+                            sys.exit(1)
 
-                print(Colors['Reset'])
-            elif line.startswith('files:'):
-                has_file_changes = True
-            else:
-                print(line)
+                        change_lines = fixup_renames(output.split('\n'))
+                        Status().process_lines(change_lines, options)
 
-            i += 1
+                    print(Colors['Reset'])
+                elif line.startswith('files:'):
+                    has_file_changes = True
+                else:
+                    print(line)
+
+                i += 1

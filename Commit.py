@@ -40,7 +40,7 @@ from PyHg_lib import wrap_line, \
                      find_hg_root, \
                      is_valid, \
                      extract_comments, \
-                     DISPLAY_COMMENT,
+                     DISPLAY_COMMENT, \
                      Colors
 from Stage import StageEntry, StageIO, Staged
 

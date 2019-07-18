@@ -577,7 +577,7 @@ if any, are displayed with the Hg Suite `status` formatting instead of just
 being listed on a single line.
 
 This command only supports a subset of the full Mercurial log command.
-As of this writing, only '-r/--revision' and '-l/--limit' are supported.
+Please run it with the '--help' option to see them all.
 
 ![log](https://user-images.githubusercontent.com/4536448/60992077-08d94280-a309-11e9-932c-9afb073c5932.png)
 
