@@ -136,6 +136,10 @@ class Options(object):
                 if self.action == 'shelved':
                     parser.add_argument("-v", "--verbose", dest="detailed", action="store_true", default=False, help="Include as much detail as possible.")
 
+            if self.action == 'switch':
+                # 'switch' may invoke 'shelve', so pass along a subset of its options
+                parser.add_argument("-V", "--ide-state", dest="ide_state", action="store_true", default=False, help="When shelving, save the current state of the Visual Studio IDE for all defined solutions.")
+
             if self.action == 'restore':
                 parser.add_argument('shelf_name', metavar='MICROBRANCH', type=str, default='', nargs='?', help='Optional source microbranch for the restore operation.')
                 parser.add_argument("-o", "--overwrite", action="store_true", dest="overwrite", default=False, help="Force replacement of modified destination (no merge check).")

@@ -43,6 +43,9 @@ import tempfile
 import binascii
 import mimetypes
 
+if sys.version_info[0] < 3:
+    import codecs
+
 LF=1
 CRLF=2
 MANIFEST_VERSION=1
@@ -625,10 +628,21 @@ def marshall_comments(filename, display=DISPLAY_PLAIN):
     if not os.path.exists(filename):
         raise Exception("The provided file ('%s') does not exist." % filename)
 
-    try:
-        lines = open(filename).readlines()
-    except:
-        raise Exception("Failed to read file '%s'" % filename)
+    lines = []
+    if sys.version_info[0] < 3:
+        try:
+            with codecs.open(filename, encoding='utf-8') as f:
+                for l in f:
+                    lines.append(l)
+        except:
+            raise Exception("Failed to read file '%s'" % filename)
+    else:
+        try:
+            with open(filename, encoding='utf-8') as f:
+                for l in f:
+                    lines.append(l)
+        except:
+            raise Exception("Failed to read file '%s'" % filename)
 
     fixed_lines, comments = __pull_comments(lines, display_type=display)
 
