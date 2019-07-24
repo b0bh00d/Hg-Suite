@@ -296,13 +296,13 @@ state of the source file.
 
 References are "light" staged entries, simply maintaining a pointer to
 the source file.  The state of the source file is not independent of its
-staged reference.  For example, if the state of a source file for a staged
-reference is cleared, the staged reference becomes invalid ("orphaned").
+staged **reference**.  For example, if the state of a source file for a staged
+reference is cleared, the staged **reference** becomes invalid ("orphaned").
 The staging system will detect this, and will either automatically purge
 the orphaned file, or notify you of the invalid state (depending on the
 command executed).  See the `staged` command for more info on this condition.
 
-A staged snapshot is an actual copy of the source file at a point in time.
+A staged **snapshots** is an actual copy of the source file at a point in time.
 This means that it is divorced from the state of the source file, and can
 continue to be managed in the staging area even *after* the source files
 state is changed (even if it is removed from the repository).  At the time
@@ -405,12 +405,12 @@ staging areas is one isn't explicitly named using the 'stage name' option
 
 > The following entries are pending in the "default" staging area:<br>
 > ! Purge.bat (&)<br>
-> The following entries are pending in the "Xpermiment" staging area:<br>
+> The following entries are pending in the "Xperiment" staging area:<br>
 > &plus; test.h (&)<br>
 > &plus; test.cpp (&)
 
-A situation can arise where a staged reference loses the linkage with its
-source file state.  This happens when the source file for a staged reference
+A situation can arise where a staged **reference** loses the linkage with its
+source file state.  This happens when the source file for a staged **reference**
 has its state reset.  In these situations, the reference becomes an "orphan".
 Such abberations in a staging area are automatically (and silently) purged by
 the `staged` command when detected.
@@ -418,7 +418,7 @@ the `staged` command when detected.
 `hg revert Purge.bat`<br>
 `staged`
 
-> The following entries are pending in the "Xpermiment" staging area:<br>
+> The following entries are pending in the "Xperiment" staging area:<br>
 > &plus; test.h (&)<br>
 > &plus; test.cpp (&)
 
