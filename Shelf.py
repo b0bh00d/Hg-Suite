@@ -83,8 +83,11 @@ class Shelve(Action):
             os.chdir("..")
 
         stage_path = StageIO().get_staging_root(root, options)
-        stages = os.listdir(stage_path)
-        stage_path = os.path.join(".hg", "stage") if len(stages) != 0 else None
+        if os.path.exists(stage_path):
+            stages = os.listdir(stage_path)
+            stage_path = os.path.join(".hg", "stage") if len(stages) != 0 else None
+        else:
+            stage_path = None
 
         if not os.path.exists('.hg'):
             os.chdir(working_dir)
