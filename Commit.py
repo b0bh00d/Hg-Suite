@@ -80,7 +80,7 @@ class Commit(object):
                 sys.exit(1)
 
             # need root before we alter it
-            stage_name = staged_entries.keys()[0]
+            stage_name = list(staged_entries.keys())[0]
             stage_path = StageIO().get_staging_root(root, options)
             stage_db_path = os.path.join(stage_path, stage_name)
             stage_db_file = os.path.join(stage_db_path, 'stage.db')
