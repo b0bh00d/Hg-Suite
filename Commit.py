@@ -184,13 +184,13 @@ class Commit(object):
                     try:
                         shutil.copy2(full_path, snapshot_bak_path)
                     except:
-                        print('ERROR: Backup of "%s" could created for version in "%s" staging area..' % (filename, staged_entries.keys()[0]), file=sys.stderr)
+                        print('ERROR: Backup of "%s" could created for version in "%s" staging area..' % (filename, list(staged_entries.keys())[0]), file=sys.stderr)
                         sys.exit(1)
 
                     try:
                         shutil.copy2(snapshot_path, full_path)
                     except:
-                        print('ERROR: Staged version of "%s" in "%s" staging area could placed for comitting.' (filename, staged_entries.keys()[0]), file=sys.stderr)
+                        print('ERROR: Staged version of "%s" in "%s" staging area could placed for comitting.' (filename, list(staged_entries.keys())[0]), file=sys.stderr)
                         sys.exit(1)
 
                     snapshot_backups = True
@@ -210,7 +210,7 @@ class Commit(object):
 
             stage_prefix = ''
             if len(stage_db):
-                stage_prefix = '[%s] ' % (options.stage_name if options.stage_name is not None else staged_entries.keys()[0])
+                stage_prefix = '[%s] ' % (options.stage_name if options.stage_name is not None else list(staged_entries.keys())[0])
             if options.ansi_color:
                 if options.ansi_color_requires_batch:
                     batch_text += 'echo %s%s%s\n' % (stage_prefix, Colors['BrightYellow'], filename)
@@ -341,7 +341,7 @@ class Commit(object):
                                 command = ['hg', 'add', key]
                                 output = subprocess.Popen(command, stdout=subprocess.PIPE, cwd=root).communicate()[0].decode("utf-8")
                                 if len(output.strip()) != 0:
-                                    print('ERROR: Failed to restore snapshot backup for entry "%s" in the "%s" staging area.' % (key, staged_entries.keys()[0]), file=sys.stderr)
+                                    print('ERROR: Failed to restore snapshot backup for entry "%s" in the "%s" staging area.' % (key, list(staged_entries.keys())[0]), file=sys.stderr)
                                     sys.exit(1)
 
             shutil.rmtree(stage_db_path)
