@@ -124,7 +124,8 @@ class Options(object):
                 parser.add_argument("-x", "--pushex", action="store_true", dest="push_external", default=False, help="Push committed changes to an external destination.")
                 parser.add_argument("-A", "--authtoken", dest="auth_token", default=None, help="Insert an authorization token for the commit.")
 
-            if 'shelve' in self.action:
+            # 'switch' may invoke 'shelve', so pass along a subset of its options
+            if ('shelve' in self.action) or (self.action == 'switch'):
                 parser.add_argument('shelf_name', metavar='MICROBRANCH', default='', nargs='?', help='Optional microbranch id for the operation.')
                 parser.add_argument("-n", "--no-revert", dest="no_revert", action="store_true", default=False, help="Bypass any implicit reverting of changes in the working copy.")
                 parser.add_argument("-c", "--comment", dest="comment", default='', help="Provide a comment for shelved microbranch.")
@@ -135,10 +136,6 @@ class Options(object):
                 parser.add_argument("-V", "--ide-state", dest="ide_state", action="store_true", default=False, help="When shelving, save the current state of the Visual Studio IDE for all defined solutions.")
                 if self.action == 'shelved':
                     parser.add_argument("-v", "--verbose", dest="detailed", action="store_true", default=False, help="Include as much detail as possible.")
-
-            if self.action == 'switch':
-                # 'switch' may invoke 'shelve', so pass along a subset of its options
-                parser.add_argument("-V", "--ide-state", dest="ide_state", action="store_true", default=False, help="When shelving, save the current state of the Visual Studio IDE for all defined solutions.")
 
             if self.action == 'restore':
                 parser.add_argument('shelf_name', metavar='MICROBRANCH', type=str, default='', nargs='?', help='Optional source microbranch for the restore operation.')
@@ -191,7 +188,7 @@ class Options(object):
                 self.push_changes = True if options.push_external else options.push_changes
                 self.auth_token = options.auth_token
 
-            if 'shelve' in self.action:
+            if ('shelve' in self.action) or (self.action == 'switch'):
                 self.shelf_name = options.shelf_name
                 self.no_revert  = options.no_revert
                 self.comment = options.comment

@@ -68,10 +68,14 @@ class Switch(Action):
             self.message = 'ERROR: Must be in root of working copy to use the switch command.'
             return False
 
-        if len(options.args) == 0:
+        if (len(options.args) == 0) and (len(options.shelf_name) == 0):
             os.chdir(working_dir)
             self.message = 'ERROR: A target branch name must be specified.'
             return False
+
+        if len(options.shelf_name):
+            options.args = [options.shelf_name]
+            #options.shelf_name = ''
 
         self.mb_root = find_mb_root()   # this will not return if we can't find a working location
         self.mb_switch = os.path.join(self.mb_root, 'switch')
