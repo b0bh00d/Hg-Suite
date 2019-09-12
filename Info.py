@@ -224,6 +224,8 @@ class Log(object):
 
         if len(options.log_branch):
             command += ['-b', options.log_branch]
+        else:
+            command += ['-b', options.branch]
 
         if options.log_no_merges:
             command.append('-M')
