@@ -631,14 +631,14 @@ def marshall_comments(filename, display=DISPLAY_PLAIN):
     lines = []
     if sys.version_info[0] < 3:
         try:
-            with codecs.open(filename, encoding='utf-8') as f:
+            with codecs.open(filename, encoding='utf-8', errors='backslashreplace') as f:
                 for l in f:
                     lines.append(l)
         except:
             raise Exception("Failed to read file '%s'" % filename)
     else:
         try:
-            with open(filename, encoding='utf-8') as f:
+            with open(filename, encoding='utf-8', errors='backslashreplace') as f:
                 for l in f:
                     lines.append(l)
         except:
