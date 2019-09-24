@@ -222,10 +222,11 @@ class Log(object):
         if options.log_limit != 0:
             command += ['-l', options.log_limit]
 
-        if len(options.log_branch):
-            command += ['-b', options.log_branch]
-        else:
-            command += ['-b', options.branch]
+        if len(options.log_rev) == 0:
+            if len(options.log_branch):
+                command += ['-b', options.log_branch]
+            else:
+                command += ['-b', options.branch]
 
         if options.log_no_merges:
             command.append('-M')
