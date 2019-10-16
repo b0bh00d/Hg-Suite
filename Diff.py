@@ -69,4 +69,8 @@ class Diff(object):
 
         for file in files_to_diff:
             command_ = command + [file]
-            subprocess.call(command_)
+            try:
+                output = subprocess.check_output(command_, stderr=subprocess.STDOUT)
+            except:
+                # fall back to the command line HG diff
+                subprocess.call(['hg', 'diff', file])
