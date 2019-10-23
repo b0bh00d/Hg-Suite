@@ -71,6 +71,7 @@ class Diff(object):
             command_ = command + [file]
             try:
                 output = subprocess.check_output(command_, stderr=subprocess.STDOUT)
-            except:
-                # fall back to the command line HG diff
-                subprocess.call(['hg', 'diff', file])
+            except subprocess.CalledProcessError as e:
+                if (e.returncode != 0) and len(e.output):
+                    # fall back to the command line HG diff
+                    subprocess.call(['hg', 'diff', file])
