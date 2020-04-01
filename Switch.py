@@ -108,6 +108,7 @@ class Switch(Action):
         output = subprocess.Popen(['hg', 'status', '--quiet'], stdout=subprocess.PIPE).communicate()[0].decode("utf-8")
         if len(output):
             # shelve the changes
+            options.shelf_name = options.branch
             if not self.shelve(options):
                 os.chdir(working_dir)
                 return False
