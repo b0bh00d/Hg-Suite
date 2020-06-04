@@ -144,7 +144,7 @@ class Commit(object):
                 staged_entry = stage_db[filename]
                 if staged_entry.state != status:
                     # must be the same state; abort
-                    print('ERROR: Staged version of "%s" has different state (%s != %s).' (filename, staged_entry.state, status), file=sys.stderr)
+                    print('ERROR: Staged version of "%s" has different state (%s != %s).' % (filename, staged_entry.state, status), file=sys.stderr)
                     sys.exit(1)
                 full_path = os.path.join(root, filename)
             else:
@@ -190,7 +190,7 @@ class Commit(object):
                     try:
                         shutil.copy2(snapshot_path, full_path)
                     except:
-                        print('ERROR: Staged version of "%s" in "%s" staging area could placed for comitting.' (filename, list(staged_entries.keys())[0]), file=sys.stderr)
+                        print('ERROR: Staged version of "%s" in "%s" staging area could placed for comitting.' % (filename, list(staged_entries.keys())[0]), file=sys.stderr)
                         sys.exit(1)
 
                     snapshot_backups = True
