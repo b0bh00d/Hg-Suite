@@ -125,7 +125,7 @@ class Switch(Action):
         # apply any cached micro-branch work
         options.args[0] = target_branch
         # make sure we overwrite things
-        options.overwrite = True
+        #options.overwrite = True
         if not self.restore(options):
             print(self.message, file=sys.stderr)
             self.message = 'ERROR: Failed to apply cached micro-branch to branch "%s".' % target_branch

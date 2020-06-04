@@ -137,6 +137,9 @@ class Options(object):
                 if self.action == 'shelved':
                     parser.add_argument("-v", "--verbose", dest="detailed", action="store_true", default=False, help="Include as much detail as possible.")
 
+            if self.action == 'switch':
+                parser.add_argument("-o", "--overwrite", action="store_true", dest="overwrite", default=False, help="Force replacement of modified destination (no merge check).")
+
             if self.action == 'restore':
                 parser.add_argument('shelf_name', metavar='MICROBRANCH', type=str, default='', nargs='?', help='Optional source microbranch for the restore operation.')
                 parser.add_argument("-o", "--overwrite", action="store_true", dest="overwrite", default=False, help="Force replacement of modified destination (no merge check).")
@@ -199,6 +202,9 @@ class Options(object):
                 self.ide_state = options.ide_state
                 if self.action == 'shelved':
                     self.detailed = options.detailed
+
+            if self.action == 'switch':
+                self.overwrite = options.overwrite
 
             if self.action == 'restore':
                 self.overwrite = options.overwrite

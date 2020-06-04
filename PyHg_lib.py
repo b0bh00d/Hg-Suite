@@ -48,7 +48,7 @@ if sys.version_info[0] < 3:
 
 LF=1
 CRLF=2
-MANIFEST_VERSION=1
+MANIFEST_VERSION=2
 
 # These are the extensions of common text-based files that we might encounter
 # when processing embedded commit comments.
@@ -714,27 +714,27 @@ def format_seconds(seconds, limits=[]):
         if limits[YEARS]:
             amount = seconds / ONEYEAR
             plural = "s" if seconds > ONEYEAR else ""
-            _str = '%d year%s' (amount, plural)
+            _str = '%d year%s' % (amount, plural)
         elif limits[MONTHS]:
             amount = seconds / ONEMONTH
             plural = "s" if seconds > ONEMONTH else ""
-            _str = '%d month%s' (amount, plural)
+            _str = '%d month%s' % (amount, plural)
         elif limits[WEEKS]:
             amount = seconds / ONEWEEK
             plural = "s" if seconds > ONEWEEK else ""
-            _str = '%d week%s' (amount, plural)
+            _str = '%d week%s' % (amount, plural)
         elif limits[DAYS]:
             amount = seconds / ONEDAY
             plural = "s" if seconds > ONEDAY else ""
-            _str = '%d day%s' (amount, plural)
+            _str = '%d day%s' % (amount, plural)
         elif limits[HOURS]:
             amount = seconds / ONEHOUR
             plural = "s" if seconds > ONEHOUR else ""
-            _str = '%d hour%s' (amount, plural)
+            _str = '%d hour%s' % (amount, plural)
         elif limits[MINUTES]:
             amount = seconds / ONEMINUTE
             plural = "s" if seconds > ONEMINUTE else ""
-            _str = '%d minute%s' (amount, plural)
+            _str = '%d minute%s' % (amount, plural)
     else:
         if (len(limits) == 0 or limits[YEARS]) and seconds >= ONEYEAR:      # 31,536,000 seconds in 365 days
             years = seconds / ONEYEAR

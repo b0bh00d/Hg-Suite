@@ -41,10 +41,11 @@ import sys
 import os
 import time
 import glob
-if sys.version_info[0] > 2:
+import hashlib
+try:
     from urllib.parse import quote
     from urllib.parse import unquote
-else:
+except ImportError:
     from urllib import quote
     from urllib import unquote
 import shutil
@@ -125,7 +126,7 @@ class Shelve(Action):
                 manifest_lines = open(manifest_name).readlines()
                 if manifest_lines[0].startswith('version '):
                     manifest_version = int(manifest_lines[0][8:])
-                    if manifest_version == 1:
+                    if manifest_version >= 1:
                         manifest_comment = manifest_lines[1].rstrip()
                 else:
                     manifest_comment = manifest_lines[0].rstrip()
@@ -238,23 +239,19 @@ class Shelve(Action):
                 for line in manifest:
                     action = line[0]
                     if os.name == 'nt':
-                        file = line[2:].replace('/', '\\')
+                        file_name = line[2:].replace('/', '\\')
                     else:
-                        file = line[2:].replace('\\', '/')
+                        file_name = line[2:].replace('\\', '/')
                     #timestamp = 0.0
                     changeset = ''
 
                     if action == 'M':
-                        changeset = get_changeset_for(options, file)
-                        if not changeset:
-                            self.message = 'ERROR: Failed to determine changeset for file "%s"!' % file
-                            return False
-                        #timestamp = os.stat(file).st_mtime
+                        changeset = hashlib.md5(open(file_name,'rb').read()).hexdigest()
 
                     elif action == 'V':
                         # the revert above may have left the renamed file in place
                         # we are nice, and clean it up for them...
-                        to_name = file.split(',')[1]
+                        to_name = file_name.split(',')[1]
                         if os.path.exists(to_name):
                             try:
                                 os.remove(to_name)
@@ -262,7 +259,7 @@ class Shelve(Action):
                                 self.message = 'ERROR: Failed to remove renamed file "%s"!' % to_name
                                 return False
 
-                    f.write('%s?%s?%s\n' % (action, file, changeset))
+                    f.write('%s?%s?%s\n' % (action, file_name, changeset))
 
             batch_text = ''
             if os.name == 'nt':
@@ -492,7 +489,7 @@ class Restore(Action):
         if manifest_lines[0].startswith('version '):
             manifest_version = int(manifest_lines[0][8:])
             del manifest_lines[0]
-            if manifest_version == 1:
+            if manifest_version >= 1:
                 manifest_comment = manifest_lines[1].rstrip()
             del manifest_lines[0]
         else:
@@ -506,9 +503,7 @@ class Restore(Action):
         add_status = {}
         for line in manifest_lines:
             line = line.rstrip()
-            status, file_name, old_changeset = (None, None, None)
-            if manifest_version <= 1:
-                status, file_name, old_changeset = line.split('?')
+            status, file_name, previous_key = line.split('?')  # 'previous_key' will be an md5 hash starting with MANIFEST_VERSION 2
             if os.name == 'nt':
                 file_name = file_name.replace('/', '\\')
             else:
@@ -553,19 +548,27 @@ class Restore(Action):
                         return False
 
             elif status == 'M':
+                files_are_equal = False
                 # see if the file is unchanged by the merge; in that case, just copy it
-                new_changeset = get_changeset_for(options, file_name)
-                if not new_changeset:
-                    if shelved_stage is not NOne:
-                        shutil.rmtree(stage_path)
-                    os.chdir(working_dir)
-                    self.message = 'ERROR: Failed to determine changeset for file "%s".' % file_name
-                    return False
+                if manifest_version <= 1:
+                    new_key = get_changeset_for(options, file_name)
+                    if not new_key:
+                        if shelved_stage is not None:
+                            shutil.rmtree(stage_path)
+                        os.chdir(working_dir)
+                        self.message = 'ERROR: Failed to determine changeset for file "%s".' % file_name
+                        return False
 
-                old_crc32 = crc32(os.path.join(working_folder, file_name))
-                new_crc32 = crc32(file_name)
+                    old_crc32 = crc32(os.path.join(working_folder, file_name))
+                    new_crc32 = crc32(file_name)
 
-                if options.overwrite or ((old_changeset == new_changeset) and (old_crc32 == new_crc32)):
+                    files_are_equal = (previous_key == new_key) and (old_crc32 == new_crc32)
+                else:
+                    # make sure the target file hasn't changed since we last shelved
+                    new_key = hashlib.md5(open(file_name,'rb').read()).hexdigest()
+                    files_are_equal = new_key == previous_key
+
+                if options.overwrite or files_are_equal:
                     try:
                         shutil.copyfile(os.path.join(working_folder, file_name), file_name)
                         if not quiet:
@@ -587,12 +590,21 @@ class Restore(Action):
                         elif len(options.diff):
                             merge_tool = options.diff
                     if len(merge_tool):
-                        old_crc32 = crc32(file_name)
+                        previous_key = hashlib.md5(open(os.path.join(working_folder, file_name),'rb').read()).hexdigest()
                         os.system('%s "%s" "%s"' % (merge_tool, os.path.join(working_folder, file_name), file_name))
-                        new_crc32 = crc32(file_name)
-                        merge_status[file_name] = (old_crc32 != new_crc32)
-                        if not quiet:
-                            print('.', end='')
+                        new_key = hashlib.md5(open(os.path.join(working_folder, file_name),'rb').read()).hexdigest()
+                        merge_status[file_name] = (previous_key != new_key)
+                        if previous_key != new_key:
+                            try:
+                                shutil.copyfile(os.path.join(working_folder, file_name), file_name)
+                                if not quiet:
+                                    print('.', end='')
+                            except:
+                                abort_cleanup(abort_cleanups)
+                                self.message = 'ERROR: Failed to restore merged file "%s":\n...aborting restore...' % file_name
+                                return False
+                        else:
+                            print("WARNING: Skipping '%s'; no merge performed..." % file_name, file=sys.stderr)
                     else:
                         if not quiet:
                             print("WARNING: Skipping '%s'; no merge solution available..." % file_name, file=sys.stderr)
@@ -613,7 +625,7 @@ class Restore(Action):
                 output = ''
                 from_name, to_name = file_name.split(',')
 
-                # first, perform a 'move' on the existing file
+                # first, perform a 'move' (i.e., rename) on the existing file
                 if os.path.exists(from_name):
                     output = subprocess.Popen(['hg', 'mv', from_name, to_name], stdout=subprocess.PIPE).communicate()[0].decode("utf-8")
                 if len(output):
@@ -622,11 +634,16 @@ class Restore(Action):
                     return False
 
                 # next, copy the contents of the archived version if it differs
+                files_are_equal = False
+                if manifest_version <= 1:
+                    old_crc32 = crc32(os.path.join(working_folder, to_name))
+                    new_crc32 = crc32(to_name)
+                    files_are_equal = (previous_key == new_key) and (old_crc32 == new_crc32)
+                else:
+                    new_key = hashlib.md5(open(to_name,'rb').read()).hexdigest()
+                    files_are_equal = new_key == previous_key
 
-                old_crc32 = crc32(os.path.join(working_folder, to_name))
-                new_crc32 = crc32(to_name)
-
-                if options.overwrite or ((old_changeset == new_changeset) and (old_crc32 == new_crc32)):
+                if options.overwrite or files_are_equal:
                     try:
                         shutil.copyfile(os.path.join(working_folder, to_name), to_name)
                         if not quiet:
@@ -635,6 +652,37 @@ class Restore(Action):
                         abort_cleanup(abort_cleanups)
                         self.message = 'ERROR: Failed to restore renamed file "%s":\n...aborting restore...' % to_name
                         return False
+                else:
+                    # the file has been altered, so we have to merge...see what we have available
+                    merge_tool = ''
+                    if 'PYHG_MERGE_TOOL' in os.environ:
+                        merge_tool = os.environ['PYHG_MERGE_TOOL']
+                    elif os.name == 'nt':
+                        if len(options.winmerge):
+                            merge_tool = options.winmerge
+                        elif len(options.patch):
+                            merge_tool = options.patch
+                        elif len(options.diff):
+                            merge_tool = options.diff
+                    if len(merge_tool):
+                        previous_key = hashlib.md5(open(os.path.join(working_folder, to_name),'rb').read()).hexdigest()
+                        os.system('%s "%s" "%s"' % (merge_tool, os.path.join(working_folder, to_name), to_name))
+                        new_key = hashlib.md5(open(os.path.join(working_folder, to_name),'rb').read()).hexdigest()
+                        merge_status[file_name] = (previous_key != new_key)
+                        if previous_key != new_key:
+                            try:
+                                shutil.copyfile(os.path.join(working_folder, to_name), to_name)
+                                if not quiet:
+                                    print('.', end='')
+                            except:
+                                abort_cleanup(abort_cleanups)
+                                self.message = 'ERROR: Failed to restore merged file "%s":\n...aborting restore...' % file_name
+                                return False
+                        else:
+                            print("WARNING: Skipping '%s'; no merge performed..." % file_name, file=sys.stderr)
+                    else:
+                        if not quiet:
+                            print("WARNING: Skipping '%s'; no merge solution available..." % file_name, file=sys.stderr)
 
             elif status == 'X':
                 # extra file -- just put it back where it was exactly as it was, no additional handling
@@ -779,31 +827,48 @@ class Conflicts(object):
             else:
                 print('Cannot access microbranch "%s".' % shelf_name_unquoted)
         else:
-            manifest_lines = open(manifest_file).readlines()
-            del manifest_lines[0]   # delete the comment
+            manifest_version = 0
+            manifest_lines = open(manifest_name).readlines()
+            if manifest_lines[0].startswith('version '):
+                manifest_version = int(manifest_lines[0][8:])
+                del manifest_lines[0]
+                if manifest_version >= 1:
+                    manifest_comment = manifest_lines[1].rstrip()
+                del manifest_lines[0]
+            else:
+                manifest_comment = manifest_lines[0].rstrip()
+                del manifest_lines[0]
 
             conflict_count = 0
             for line in manifest_lines:
                 line = line.rstrip()
                 if len(line) == 0:
                     continue
-                status, file_name, old_changeset = line.split('?')
+                status, file_name, previous_key = line.split('?')  # 'previous_key' will be an md5 hash starting with MANIFEST_VERSION 2
                 if status == 'M':
                     if os.name == 'nt':
                         file_name = file_name.replace('/', '\\')
                     else:
                         file_name = file_name.replace('\\', '/')
 
-                    new_changeset = get_changeset_for(options, file_name)
+                    files_are_equal = False
+                    # see if the file is unchanged by the merge; in that case, just copy it
+                    if manifest_version <= 1:
+                        new_key = get_changeset_for(options, file_name)
+                        if not new_key:
+                            print("ERROR: Failed to determine changeset for file '%s'!" % file_name, file=sys.stderr)
+                            os.chdir(working_dir)
+                            sys.exit(1)
 
-                    old_crc32 = crc32(os.path.join(working_dir, file_name))
-                    new_crc32 = crc32(file_name)
+                        old_crc32 = crc32(os.path.join(working_folder, file_name))
+                        new_crc32 = crc32(file_name)
 
-                    if not new_changeset:
-                        print("ERROR: Failed to determine changeset for file '%s'!" % file_name, file=sys.stderr)
-                        os.chdir(working_dir)
-                        sys.exit(1)
-                    if (old_changeset != new_changeset) or (old_crc32 != new_crc32):
+                        files_are_equal = (previous_key == new_key) and (old_crc32 == new_crc32)
+                    else:
+                        new_md5hash = hashlib.md5(open(os.path.join(working_folder, file_name),'rb').read()).hexdigest()
+                        files_are_equal = new_md5hash == previous_key
+
+                    if not files_are_equal:
                         if conflict_count == 0:
                             print('Potential conflicts detected for the following "%s" microbranch assets:' % (shelf_name_unquoted if shelf_name_unquoted != "shelf" else "default"))
                         print('\t', file_name)
