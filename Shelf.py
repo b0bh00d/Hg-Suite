@@ -251,13 +251,15 @@ class Shelve(Action):
                     elif action == 'V':
                         # the revert above may have left the renamed file in place
                         # we are nice, and clean it up for them...
-                        to_name = file_name.split(',')[1]
+                        from_name, to_name = file_name.split(',')
                         if os.path.exists(to_name):
                             try:
                                 os.remove(to_name)
                             except:
                                 self.message = 'ERROR: Failed to remove renamed file "%s"!' % to_name
                                 return False
+
+                        changeset = hashlib.md5(open(from_name,'rb').read()).hexdigest()
 
                     f.write('%s?%s?%s\n' % (action, file_name, changeset))
 
@@ -865,16 +867,16 @@ class Conflicts(object):
 
                         files_are_equal = (previous_key == new_key) and (old_crc32 == new_crc32)
                     else:
-                        new_md5hash = hashlib.md5(open(os.path.join(working_folder, file_name),'rb').read()).hexdigest()
-                        files_are_equal = new_md5hash == previous_key
+                        new_key = hashlib.md5(open(file_name,'rb').read()).hexdigest()
+                        files_are_equal = new_key == previous_key
 
                     if not files_are_equal:
                         if conflict_count == 0:
-                            print('Potential conflicts detected for the following "%s" microbranch assets:' % (shelf_name_unquoted if shelf_name_unquoted != "shelf" else "default"))
+                            print('Intervening differences detected for the following "%s" microbranch assets:' % (shelf_name_unquoted if shelf_name_unquoted != "shelf" else "default"))
                         print('\t', file_name)
                         conflict_count += 1
 
             if conflict_count == 0:
-                print('No potential conflicts detected for "%s" microbranch.' % (shelf_name_unquoted if shelf_name_unquoted != "shelf" else "default"))
+                print('No intervening differences detected for "%s" microbranch.' % (shelf_name_unquoted if shelf_name_unquoted != "shelf" else "default"))
 
         os.chdir(working_dir)
