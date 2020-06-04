@@ -137,6 +137,9 @@ class Options(object):
                 if self.action == 'shelved':
                     parser.add_argument("-v", "--verbose", dest="detailed", action="store_true", default=False, help="Include as much detail as possible.")
 
+            if self.action == 'conflicts':
+                parser.add_argument('shelf_name', metavar='MICROBRANCH', default='', nargs='?', help='Optional microbranch id for the operation.')
+
             if self.action == 'switch':
                 parser.add_argument("-o", "--overwrite", action="store_true", dest="overwrite", default=False, help="Force replacement of modified destination (no merge check).")
 
@@ -202,6 +205,9 @@ class Options(object):
                 self.ide_state = options.ide_state
                 if self.action == 'shelved':
                     self.detailed = options.detailed
+
+            if self.action == 'conflicts':
+                self.shelf_name = options.shelf_name
 
             if self.action == 'switch':
                 self.overwrite = options.overwrite

@@ -822,8 +822,14 @@ class Conflicts(object):
         shelf_name = quote(shelf_name, '')
 
         root = find_mb_root()   # this will not return if we can't find a working location
-        manifest_file = os.path.join(root, '%s.manifest' % shelf_name)
-        if not os.path.exists(manifest_file):
+
+        manifest_version = 0
+        manifest = []
+        manifest_name = os.path.join(root, '%s.manifest' % shelf_name)
+        manifest_archive = os.path.join(root, '%s.7z' % shelf_name)
+        manifest_comment = ''
+
+        if not os.path.exists(manifest_name):
             if shelf_name == 'shelf':
                 print('Working copy has no cached default microbranch.')
             else:
